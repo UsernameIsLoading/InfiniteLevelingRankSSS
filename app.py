@@ -1,5 +1,6 @@
 import os, io, csv, json, secrets
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+from zoneinfo import ZoneInfo
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -10,6 +11,9 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-this-before-depl
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///sistema_soberano.db')
 if db_url.startswith('postgres://'):
     db_url = db_url.replace('postgres://', 'postgresql://', 1)
+# The deployment requirements install psycopg 3, so select its SQLAlchemy dialect explicitly.
+if db_url.startswith('postgresql://'):
+    db_url = db_url.replace('postgresql://', 'postgresql+psycopg://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -103,6 +107,40 @@ class PerformanceEntry(db.Model):
     notes = db.Column(db.Text, default='')
     recorded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+class TrialSession(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    kind = db.Column(db.String(20), nullable=False)  # baseline or weekly
+    title = db.Column(db.String(120), nullable=False)
+    week_start = db.Column(db.Date, nullable=True, index=True)
+    snapshot_json = db.Column(db.Text, default='{}', nullable=False)
+    notes = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+class TrialResult(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.Integer, db.ForeignKey('trial_session.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    category = db.Column(db.String(20), nullable=False)  # fisico or mental
+    test_name = db.Column(db.String(120), nullable=False)
+    value = db.Column(db.Float, nullable=False)
+    unit = db.Column(db.String(30), default='', nullable=False)
+    notes = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class CampaignChapterProgress(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    arc_key = db.Column(db.String(40), nullable=False)
+    chapter_index = db.Column(db.Integer, nullable=False)
+    choice = db.Column(db.String(120), nullable=True)
+    completed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (db.UniqueConstraint('user_id', 'arc_key', 'chapter_index', name='uq_campaign_chapter'),)
+
+
+def local_today():
+    return datetime.now(ZoneInfo('America/Sao_Paulo')).date()
 
 def current_user():
     uid = session.get('user_id')
@@ -333,9 +371,168 @@ def performance():
     entries=PerformanceEntry.query.filter_by(user_id=u.id).order_by(PerformanceEntry.recorded_at.desc()).limit(100).all()
     return render_template('performance.html', entries=entries)
 
+@app.route('/trial', methods=['GET', 'POST'])
+@login_required
+def trial():
+    u = current_user()
+    today = local_today()
+    monday = today - timedelta(days=today.weekday())
+    kind = request.args.get('kind', 'baseline').strip().lower()
+    if kind not in ('baseline', 'weekly'):
+        kind = 'baseline'
+    baseline_exists = TrialSession.query.filter_by(user_id=u.id, kind='baseline').first() is not None
+    current_week_session = TrialSession.query.filter_by(user_id=u.id, kind='weekly', week_start=monday).first()
+    if kind == 'baseline' and baseline_exists:
+        flash('A Provação de Fundação já foi registrada. Podes consultar o histórico ou registrar a avaliação semanal.', 'success')
+        return redirect(url_for('trial', kind='weekly'))
+    if kind == 'weekly' and current_week_session:
+        flash('A avaliação desta semana já foi registrada. Os resultados estão no histórico.', 'success')
+        return redirect(url_for('evolution'))
+    if request.method == 'POST':
+        if kind == 'weekly' and today.weekday() != 6:
+            flash('O Dia da Provação semanal acontece no domingo. A Provação de Fundação pode ser feita agora.', 'error')
+            return redirect(url_for('trial', kind='weekly'))
+        notes = request.form.get('session_notes', '').strip()[:2000]
+        names = request.form.getlist('test_name[]')
+        categories = request.form.getlist('category[]')
+        values = request.form.getlist('value[]')
+        units = request.form.getlist('unit[]')
+        result_notes = request.form.getlist('result_notes[]')
+        prepared = []
+        errors = []
+        for i, raw_name in enumerate(names):
+            name = raw_name.strip()[:120]
+            raw_value = values[i].strip() if i < len(values) else ''
+            if not raw_value:
+                continue
+            category = categories[i] if i < len(categories) else ''
+            unit = units[i].strip()[:30] if i < len(units) else ''
+            detail = result_notes[i].strip()[:500] if i < len(result_notes) else ''
+            if category not in ('fisico', 'mental') or not name or not raw_value:
+                errors.append('Cada resultado preenchido precisa de categoria, nome do teste e valor.')
+                break
+            try:
+                value = float(raw_value.replace(',', '.'))
+                if value < 0 or value > 100000000:
+                    raise ValueError()
+            except ValueError:
+                errors.append('Usa valores numéricos não negativos. Para tempo de reação, registra em milissegundos.')
+                break
+            prepared.append((category, name, value, unit, detail))
+        if not errors and not prepared:
+            errors.append('Registra pelo menos um resultado para salvar a provação.')
+        if not errors and prepared and not {'fisico', 'mental'}.issubset({item[0] for item in prepared}):
+            errors.append('A provação precisa de pelo menos um resultado físico e um resultado mental.')
+        if errors:
+            for err in errors: flash(err, 'error')
+        else:
+            snapshot = {key: getattr(u, key) for key in ATTRIBUTES}
+            snapshot.update({'level': u.level, 'xp': u.xp, 'recorded_on': today.isoformat()})
+            title = 'Provação de Fundação' if kind == 'baseline' else 'Dia da Provação'
+            sess = TrialSession(user_id=u.id, kind=kind, title=title, week_start=None if kind == 'baseline' else monday,
+                                snapshot_json=json.dumps(snapshot, ensure_ascii=False), notes=notes)
+            db.session.add(sess)
+            db.session.flush()
+            for category, name, value, unit, detail in prepared:
+                db.session.add(TrialResult(session_id=sess.id, user_id=u.id, category=category,
+                                           test_name=name, value=value, unit=unit, notes=detail))
+            db.session.commit()
+            flash(f'{title} registrada. Foram salvos {len(prepared)} resultados e uma fotografia dos teus atributos.', 'success')
+            return redirect(url_for('evolution'))
+    suggested = [
+        {'category':'fisico','name':'Flexões válidas','unit':'repetições'},
+        {'category':'fisico','name':'Barra fixa válida','unit':'repetições'},
+        {'category':'fisico','name':'Prancha','unit':'segundos'},
+        {'category':'fisico','name':'Exercício com carga','unit':'kg'},
+        {'category':'mental','name':'Tempo de reação','unit':'ms'},
+        {'category':'mental','name':'Teste de memória','unit':'pontos'},
+        {'category':'mental','name':'Prova de conhecimento','unit':'% ou pontos'},
+        {'category':'mental','name':'Outro teste mental','unit':'pontos'},
+    ]
+    return render_template('trial.html', kind=kind, today=today, monday=monday,
+                           baseline_exists=baseline_exists, current_week_session=current_week_session,
+                           suggested=suggested)
+
+@app.route('/evolution')
+@login_required
+def evolution():
+    u = current_user()
+    sessions = TrialSession.query.filter_by(user_id=u.id).order_by(TrialSession.created_at.asc()).all()
+    session_rows = []
+    for sess in sessions:
+        try: snapshot = json.loads(sess.snapshot_json or '{}')
+        except Exception: snapshot = {}
+        results = TrialResult.query.filter_by(session_id=sess.id).order_by(TrialResult.category, TrialResult.test_name).all()
+        session_rows.append({'session': sess, 'snapshot': snapshot, 'results': results})
+    current_values = [{'key': key, 'label': ATTR_LABELS[key], 'value': getattr(u, key)} for key in ATTRIBUTES]
+    # Match identical test names to show comparable measurements over time.
+    grouped = {}
+    for sess in sessions:
+        for result in TrialResult.query.filter_by(session_id=sess.id).all():
+            grouped.setdefault((result.category, result.test_name, result.unit), []).append({'date': sess.created_at.strftime('%d/%m/%Y'), 'value': result.value})
+    comparisons = []
+    for (category, name, unit), points in grouped.items():
+        if len(points) >= 2:
+            comparisons.append({'category': category, 'name': name, 'unit': unit, 'points': points, 'first': points[0]['value'], 'last': points[-1]['value'], 'delta': points[-1]['value'] - points[0]['value']})
+    return render_template('evolution.html', user=u, sessions=list(reversed(session_rows)), current_values=current_values, comparisons=comparisons)
+
 @app.route('/story')
 @login_required
-def story(): return render_template('story.html')
+def story():
+    today = local_today()
+    monday = today - timedelta(days=today.weekday())
+    # The first arc is intentionally authored for one Monday-to-Sunday cycle.
+    arc_start = date(2026, 10, 12)
+    day_index = (today - arc_start).days
+    chapters = [
+        {'day':'SEGUNDA','title':'Sinal de Ativação','mission':'Estabelece o primeiro vínculo com o Sistema.','body':['Às 00:00, o ecrã apaga-se por um instante. Uma janela azul surge sobre a rotina habitual: nenhum mapa, nenhuma explicação, apenas uma linha de diagnóstico que não reconhece cansaço nem intenção — somente ações verificáveis.','O Sistema pede um primeiro registro. O gesto parece pequeno, mas transforma uma promessa vaga em dado persistente. Pela primeira vez, a interface distingue aquilo que foi imaginado daquilo que realmente aconteceu.'],'objective':'Registra uma atividade real e escolhe como responder ao primeiro sinal.','choices':[('observar','Observar os dados antes de agir'),('agir','Agir primeiro e analisar depois')]},
+        {'day':'TERÇA','title':'Leitura do Terreno','mission':'Descobre onde a consistência já existe.','body':['O diagnóstico inicial revela uma paisagem irregular: áreas de força, lacunas de conhecimento e hábitos que aparecem apenas quando tudo corre bem. O Sistema não chama isso de fracasso; chama de terreno ainda não cartografado.','Uma leitura detalhada mostra que progresso não é uma linha reta. O que importa agora é escolher uma ação que possa ser repetida, sem tentar compensar meses em uma única sessão.'],'objective':'Registra uma sessão de estudo, treino ou recuperação coerente com o teu plano.','choices':[('corpo','Priorizar uma ação física adequada'),('mente','Priorizar estudo e resolução de problemas'),('equilibrio','Distribuir o esforço com equilíbrio')]},
+        {'day':'QUARTA','title':'Ruído no Sinal','mission':'Resolve uma pequena pendência em vez de fugir dela.','body':['No terceiro dia, os indicadores oscilam. O Sistema detecta interferência entre o que foi planejado e o que foi executado. Uma mensagem alerta que decisões repetidas deixam rastros — inclusive as decisões de adiar.','Não surge um inimigo para ser derrotado à força. O obstáculo é uma pendência concreta, suficientemente pequena para ser concluída e suficientemente real para exigir atenção. O Sistema aguarda um registro honesto, não uma história perfeita.'],'objective':'Conclui e registra uma tarefa importante que estava pendente.','choices':[('rapido','Resolver a tarefa mais curta primeiro'),('importante','Enfrentar a tarefa de maior impacto')]},
+        {'day':'QUINTA','title':'Padrão Oculto','mission':'Combina observação e prática.','body':['Os dados dos dias anteriores começam a revelar um padrão. O painel não explica tudo; apresenta uma pergunta que exige raciocínio, teste e correção. Cada resposta errada reduz a certeza, não o valor do Portador.','A Biblioteca do Conhecimento torna-se uma ferramenta de campo. Uma questão resolvida ou uma nota técnica bem registrada vale mais do que fingir domínio. O Sistema passa a guardar também as razões por trás dos resultados.'],'objective':'Resolve uma questão da Biblioteca ou registra uma leitura técnica com notas.','choices':[('teoria','Investigar a teoria antes de responder'),('pratica','Tentar resolver e depois estudar o erro')]},
+        {'day':'SEXTA','title':'Teste de Consistência','mission':'Escolhe uma conclusão sustentável para a semana útil.','body':['Uma notificação aparece: “A intenção não é um atributo. O comportamento repetido é evidência.” A interface compara os registros disponíveis e destaca os espaços vazios sem inventar explicações para eles.','O teste não exige ultrapassar limites físicos nem sacrificar o descanso. Exige uma decisão consciente: cumprir uma tarefa apropriada, adaptar o plano quando necessário e registrar o que de fato foi feito.'],'objective':'Registra uma atividade apropriada e revê os marcos conquistados nesta semana.','choices':[('progresso','Dar prioridade ao progresso mensurável'),('recuperacao','Priorizar recuperação para chegar bem à avaliação')]},
+        {'day':'SÁBADO','title':'Preparação para a Provação','mission':'Prepara uma avaliação comparável e segura.','body':['O Sistema abre um protocolo de avaliação. Resultados sem unidade, testes feitos em condições muito diferentes e recordes sem técnica não permitem uma comparação justa. O Portador recebe autorização para preparar o método antes de procurar o número.','O equipamento é conferido, os testes são escolhidos e o descanso passa a fazer parte do plano. A preparação não concede um recorde automático; cria condições para que o resultado de amanhã tenha significado.'],'objective':'Revê a página Provação e escolhe testes seguros que possas repetir nas próximas semanas.','choices':[('padrao','Manter os testes mais comparáveis'),('adaptado','Adaptar os testes ao estado físico atual')]},
+        {'day':'DOMINGO','title':'Dia da Provação','mission':'Converte a semana em uma referência concreta.','body':['A última janela abre sem música triunfal nem promessa de poder instantâneo. Há apenas registros, unidades, datas e a oportunidade de observar a distância entre o primeiro ponto e o ponto atual.','A avaliação não define o valor do Portador. Ela oferece informação para ajustar o próximo ciclo: o que melhorou, o que permaneceu estável e o que merece uma abordagem diferente. O arco termina com dados guardados — e não com uma conclusão definitiva sobre quem tu és.'],'objective':'Registra a Provação de Fundação ou a avaliação semanal e consulta o relatório.','choices':[('precisao','Valorizar a precisão e a técnica'),('consistencia','Valorizar a consistência de longo prazo')]},
+    ]
+    first_choice = CampaignChapterProgress.query.filter_by(user_id=current_user().id, arc_key='arc-01', chapter_index=0).first()
+    third_choice = CampaignChapterProgress.query.filter_by(user_id=current_user().id, arc_key='arc-01', chapter_index=2).first()
+    if first_choice and first_choice.choice == 'observar':
+        chapters[2]['body'].append('A tua primeira decisão — observar antes de agir — deixa uma anotação no arquivo: o Portador procura contexto antes de comprometer recursos. O Sistema reduz a incerteza, mas exige que a análise termine numa ação concreta.')
+    elif first_choice and first_choice.choice == 'agir':
+        chapters[2]['body'].append('A tua primeira decisão — agir antes de analisar — fica registrada como iniciativa. O Sistema reconhece a rapidez, mas marca uma pergunta para o relatório: a ação produziu um resultado que possa ser verificado?')
+    if third_choice and third_choice.choice == 'rapido':
+        chapters[4]['body'].append('A pendência curta escolhida no meio da semana liberou espaço mental. O relatório de sexta destaca a vantagem de reduzir atrito sem transformar rapidez em pressa constante.')
+    elif third_choice and third_choice.choice == 'importante':
+        chapters[4]['body'].append('A tarefa de maior impacto escolhida no meio da semana tornou-se o marco central do relatório. O Sistema registra a decisão como uma aposta deliberada no que mais importa.')
+    current_idx = today.weekday()
+    is_first_arc_week = arc_start <= today < arc_start + timedelta(days=7)
+    if not is_first_arc_week:
+        current_idx = -1
+    baseline_done = TrialSession.query.filter_by(user_id=current_user().id, kind='baseline').first() is not None
+    completed_chapters = set()
+    for prog in CampaignChapterProgress.query.filter_by(user_id=current_user().id, arc_key='arc-01').all():
+        completed_chapters.add(prog.chapter_index)
+    visible = [dict(ch if i <= current_idx else {'day': ch['day'], 'title': 'Capítulo selado', 'mission': 'Disponível no dia correspondente.', 'body': [], 'objective': '', 'choices': []}, index=i, unlocked=(i <= current_idx), completed=(i in completed_chapters), saved_choice=next((p.choice for p in CampaignChapterProgress.query.filter_by(user_id=current_user().id, arc_key='arc-01', chapter_index=i).all()), None)) for i,ch in enumerate(chapters)]
+    return render_template('story.html', chapters=visible, current_idx=current_idx, arc_active=is_first_arc_week,
+                           baseline_done=baseline_done, today=today)
+
+@app.route('/story/chapter/<int:index>/complete', methods=['POST'])
+@login_required
+def complete_story_chapter(index):
+    if index < 0 or index > 6: abort(404)
+    today = local_today(); arc_start = date(2026, 10, 12)
+    if not (arc_start <= today < arc_start + timedelta(days=7)) or index > today.weekday():
+        flash('Este capítulo ainda não está disponível.', 'error')
+        return redirect(url_for('story'))
+    existing = CampaignChapterProgress.query.filter_by(user_id=current_user().id, arc_key='arc-01', chapter_index=index).first()
+    selected_choice = request.form.get('choice', '').strip()[:120]
+    if not existing:
+        db.session.add(CampaignChapterProgress(user_id=current_user().id, arc_key='arc-01', chapter_index=index, choice=selected_choice or None))
+        grant_xp(current_user(), 10)
+        db.session.commit()
+        flash('Capítulo registrado: +10 XP. A tua decisão foi guardada no histórico narrativo.', 'success')
+    else:
+        flash('Este capítulo já está registrado.', 'success')
+    return redirect(url_for('story'))
 
 @app.route('/backup')
 @login_required
@@ -345,10 +542,10 @@ def backup():
     if not app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
         flash('O backup SQL direto de PostgreSQL deve ser feito com pg_dump no provedor. Esta exportação JSON contém dados essenciais.', 'error')
     payload={}
-    for model in [User,Activity,SpecialQuest,QuestCompletion,Skill,Question,TestAttempt,PerformanceEntry]:
+    for model in [User,Activity,SpecialQuest,QuestCompletion,Skill,Question,TestAttempt,PerformanceEntry,TrialSession,TrialResult,CampaignChapterProgress]:
         rows=[]
         for obj in model.query.all():
-            rows.append({c.name:(getattr(obj,c.name).isoformat() if isinstance(getattr(obj,c.name),datetime) else getattr(obj,c.name)) for c in model.__table__.columns})
+            rows.append({c.name:(getattr(obj,c.name).isoformat() if isinstance(getattr(obj,c.name),(datetime,date)) else getattr(obj,c.name)) for c in model.__table__.columns})
         payload[model.__tablename__]=rows
     mem=io.BytesIO(json.dumps(payload,ensure_ascii=False,indent=2).encode('utf-8')); mem.seek(0)
     return send_file(mem,mimetype='application/json',as_attachment=True,download_name=f'sistema-soberano-backup-{date.today().isoformat()}.json')
@@ -378,7 +575,7 @@ def delete_user(uid):
     if not u: abort(404)
     if u.id==current_user().id: flash('Não podes apagar a própria conta administrativa.', 'error')
     else:
-        for model in [Activity,QuestCompletion,Skill,TestAttempt,PerformanceEntry]: model.query.filter_by(user_id=u.id).delete(synchronize_session=False)
+        for model in [Activity,QuestCompletion,Skill,TestAttempt,PerformanceEntry,TrialResult,TrialSession,CampaignChapterProgress]: model.query.filter_by(user_id=u.id).delete(synchronize_session=False)
         db.session.delete(u); db.session.commit(); flash('Conta removida.', 'success')
     return redirect(url_for('admin'))
 

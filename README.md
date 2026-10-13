@@ -1,4 +1,4 @@
-# Sistema do Soberano — MVP 0.1
+# Sistema do Soberano — Update 0.2
 
 Aplicação web progressiva (PWA-ready) em Flask, com interface em português, banco SQL, registro de atividades, atributos, XP/níveis, missões especiais que desbloqueiam habilidades, biblioteca de questões e histórico de resultados do Strength Level/Human Benchmark.
 
@@ -71,3 +71,27 @@ Exemplo JSON:
 - O backup administrativo atual exporta JSON. A restauração de backups ainda não está implementada; para PostgreSQL, use `pg_dump`/`pg_restore` no ambiente do provedor.
 - O módulo de combate, a punição especial por contato externo, a árvore completa de classes e o modo PWA instalável com service worker são etapas posteriores.
 - Antes de uso público, recomenda-se acrescentar proteção CSRF, limitação de tentativas de login, migrações de esquema e testes automatizados.
+
+## Update 0.2 — Ciclo I e Provação
+
+Esta atualização acrescenta:
+
+- Campanha narrativa inicial com sete capítulos desbloqueados de acordo com o dia da semana (segunda a domingo), escolhas registradas e pequenas repercussões narrativas.
+- Registro de capítulos e recompensa de 10 XP por capítulo, sem permitir registrar capítulos de dias futuros.
+- **Provação de Fundação** para criar uma linha de base física e mental.
+- **Dia da Provação** semanal, com envio permitido aos domingos, registro de resultados numéricos, unidades, notas e fotografia dos atributos/nível/XP.
+- Página **Evolução**, com valores atuais, histórico de cada provação e gráficos simples para testes repetidos.
+- Persistência dos novos registros na base de dados e inclusão deles na exportação JSON de backup.
+
+### Atualização do projeto já publicado no Render
+
+1. Substitui os arquivos do repositório pelos arquivos desta versão e faz commit/push.
+2. O Render deve iniciar um novo deploy automaticamente se o repositório estiver conectado.
+3. Mantém o mesmo `DATABASE_URL` PostgreSQL e define um `SECRET_KEY` forte nas variáveis de ambiente. `db.create_all()` cria as novas tabelas sem apagar as tabelas anteriores; não apagues nem recries a base de dados para atualizar o app.
+4. Após o deploy, testa login, `/story`, `/trial?kind=baseline` e `/evolution`. Registra a Provação de Fundação com resultados reais; não uses valores inventados para preencher a linha de base.
+
+**Limitação consciente do primeiro arco:** o conteúdo narrativo foi escrito para a semana de 12 a 18 de outubro de 2026. O próximo arco precisa ser adicionado numa atualização posterior; o app não gera automaticamente uma nova história toda segunda-feira. Os capítulos, resultados e escolhas já registrados ficam persistidos na base de dados.
+
+### Segurança e interpretação dos testes
+
+Os resultados físicos e mentais são registros informados pelo usuário, não medições automáticas. Para testes físicos, prioriza técnica válida e testes submáximos/estimativas quando apropriado; não é necessário tentar uma repetição máxima absoluta em todos os exercícios semanalmente. Resultados como tempo de reação podem melhorar quando o número diminui, então a variação numérica não é automaticamente classificada como melhoria ou piora.
