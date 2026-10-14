@@ -1,13 +1,15 @@
-import os, io, csv, json, secrets
+import os, io, csv, json, secrets, random, html, urllib.parse, urllib.request, urllib.error
 from datetime import datetime, date, timedelta
 from zoneinfo import ZoneInfo
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, abort
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-this-before-deploying-' + secrets.token_hex(8))
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///sistema_soberano.db')
 if db_url.startswith('postgres://'):
     db_url = db_url.replace('postgres://', 'postgresql://', 1)
@@ -107,6 +109,25 @@ class PerformanceEntry(db.Model):
     notes = db.Column(db.Text, default='')
     recorded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+class DietEntry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    meal_type = db.Column(db.String(30), nullable=False, default='Lanche')
+    food = db.Column(db.String(200), nullable=False)
+    quantity = db.Column(db.String(100), default='')
+    calories = db.Column(db.Float, nullable=True)
+    protein_g = db.Column(db.Float, nullable=True)
+    carbs_g = db.Column(db.Float, nullable=True)
+    fat_g = db.Column(db.Float, nullable=True)
+    notes = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+class WaterEntry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    amount_ml = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
 class TrialSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
@@ -137,6 +158,61 @@ class CampaignChapterProgress(db.Model):
     choice = db.Column(db.String(120), nullable=True)
     completed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     __table_args__ = (db.UniqueConstraint('user_id', 'arc_key', 'chapter_index', name='uq_campaign_chapter'),)
+
+
+class NarrativeChapter(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    chapter_key = db.Column(db.String(100), unique=True, nullable=False)
+    number = db.Column(db.Integer, nullable=False, default=1)
+    title = db.Column(db.String(200), nullable=False)
+    weekday = db.Column(db.String(40), default='')
+    location = db.Column(db.String(200), default='')
+    timeline = db.Column(db.String(200), default='')
+    summary = db.Column(db.Text, default='')
+    content_json = db.Column(db.Text, nullable=False)
+    word_count = db.Column(db.Integer, default=0)
+    decision_count = db.Column(db.Integer, default=0)
+    active = db.Column(db.Boolean, default=True, nullable=False)
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class NarrativeChoice(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    chapter_id = db.Column(db.Integer, db.ForeignKey('narrative_chapter.id'), nullable=False, index=True)
+    decision_id = db.Column(db.String(100), nullable=False)
+    option_id = db.Column(db.String(100), nullable=False)
+    option_label = db.Column(db.String(300), nullable=False)
+    effects_json = db.Column(db.Text, default='{}', nullable=False)
+    chosen_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (db.UniqueConstraint('user_id', 'chapter_id', 'decision_id', name='uq_narrative_decision'),)
+
+
+class NarrativePlayerState(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False, index=True)
+    flags_json = db.Column(db.Text, default='[]', nullable=False)
+    inventory_json = db.Column(db.Text, default='[]', nullable=False)
+    knowledge_json = db.Column(db.Text, default='[]', nullable=False)
+    relationships_json = db.Column(db.Text, default='{}', nullable=False)
+    karma_signals_json = db.Column(db.Text, default='[]', nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class CombatEncounter(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    enemy_name = db.Column(db.String(120), nullable=False)
+    enemy_kind = db.Column(db.String(30), nullable=False, default='comum')
+    enemy_hp = db.Column(db.Integer, nullable=False)
+    enemy_max_hp = db.Column(db.Integer, nullable=False)
+    player_hp = db.Column(db.Integer, nullable=False)
+    player_max_hp = db.Column(db.Integer, nullable=False)
+    xp_reward = db.Column(db.Integer, nullable=False, default=20)
+    status = db.Column(db.String(20), nullable=False, default='active')
+    log_json = db.Column(db.Text, default='[]', nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    finished_at = db.Column(db.DateTime, nullable=True)
 
 
 def local_today():
@@ -213,12 +289,80 @@ def register():
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        user = User.query.filter_by(username=request.form.get('username','').strip()).first()
+        username = request.form.get('username','').strip()
+        user = User.query.filter(func.lower(User.username) == username.lower()).first()
         if user and check_password_hash(user.password_hash, request.form.get('password','')):
             session.clear(); session['user_id'] = user.id
             return redirect(url_for('dashboard'))
         flash('Credenciais inválidas.', 'error')
     return render_template('auth.html', mode='login')
+
+@app.route('/nutrition', methods=['GET', 'POST'])
+@login_required
+def nutrition():
+    u = current_user()
+    today = local_today()
+    local_tz = ZoneInfo('America/Sao_Paulo')
+    today_start = datetime.combine(today, datetime.min.time(), tzinfo=local_tz).astimezone(ZoneInfo('UTC')).replace(tzinfo=None)
+    tomorrow_start = today_start + timedelta(days=1)
+    if request.method == 'POST':
+        action = request.form.get('action', 'diet')
+        if action == 'water':
+            try:
+                amount = int(request.form.get('amount_ml', '0'))
+            except (TypeError, ValueError):
+                amount = 0
+            if amount < 1 or amount > 5000:
+                flash('Registra uma quantidade de água entre 1 e 5000 ml por vez.', 'error')
+            else:
+                db.session.add(WaterEntry(user_id=u.id, amount_ml=amount))
+                db.session.commit()
+                flash(f'{amount} ml de água registrados.', 'success')
+            return redirect(url_for('nutrition'))
+        food = request.form.get('food', '').strip()[:200]
+        meal_type = request.form.get('meal_type', 'Lanche').strip()[:30]
+        quantity = request.form.get('quantity', '').strip()[:100]
+        notes = request.form.get('notes', '').strip()[:1000]
+        if not food:
+            flash('Informa o alimento ou a refeição.', 'error')
+            return redirect(url_for('nutrition'))
+        def optional_number(field):
+            raw = request.form.get(field, '').strip().replace(',', '.')
+            if not raw:
+                return None
+            value = float(raw)
+            if value < 0 or value > 100000:
+                raise ValueError()
+            return value
+        try:
+            calories = optional_number('calories')
+            protein = optional_number('protein_g')
+            carbs = optional_number('carbs_g')
+            fat = optional_number('fat_g')
+        except ValueError:
+            flash('Valores nutricionais devem ser números não negativos.', 'error')
+            return redirect(url_for('nutrition'))
+        db.session.add(DietEntry(user_id=u.id, meal_type=meal_type, food=food, quantity=quantity,
+                                 calories=calories, protein_g=protein, carbs_g=carbs, fat_g=fat, notes=notes))
+        db.session.commit()
+        flash('Registro alimentar salvo.', 'success')
+        return redirect(url_for('nutrition'))
+    water_today = WaterEntry.query.filter(WaterEntry.user_id == u.id,
+        WaterEntry.created_at >= today_start, WaterEntry.created_at < tomorrow_start).order_by(WaterEntry.created_at.desc()).all()
+    diet_today = DietEntry.query.filter(DietEntry.user_id == u.id,
+        DietEntry.created_at >= today_start, DietEntry.created_at < tomorrow_start).order_by(DietEntry.created_at.desc()).all()
+    water_total = sum(entry.amount_ml for entry in water_today)
+    water_history = WaterEntry.query.filter_by(user_id=u.id).order_by(WaterEntry.created_at.desc()).limit(30).all()
+    diet_history = DietEntry.query.filter_by(user_id=u.id).order_by(DietEntry.created_at.desc()).limit(50).all()
+    totals = {
+        'calories': sum(e.calories or 0 for e in diet_today),
+        'protein': sum(e.protein_g or 0 for e in diet_today),
+        'carbs': sum(e.carbs_g or 0 for e in diet_today),
+        'fat': sum(e.fat_g or 0 for e in diet_today),
+        'has_macros': any(e.calories is not None or e.protein_g is not None or e.carbs_g is not None or e.fat_g is not None for e in diet_today)
+    }
+    return render_template('nutrition.html', today=today, water_today=water_today, water_total=water_total,
+                           water_history=water_history, diet_today=diet_today, diet_history=diet_history, totals=totals)
 
 @app.route('/service-worker.js')
 def service_worker():
@@ -302,7 +446,7 @@ def library():
         difficulty=request.form.get('difficulty','Intermediária')
         if not all([subject,level,topic,prompt,answer]): flash('Preencha disciplina, nível, assunto, enunciado e resposta.', 'error')
         else:
-            db.session.add(Question(subject=subject,level=level,topic=topic,prompt=prompt,answer=answer,explanation=explanation,options_json=json.dumps(options,ensure_ascii=False),difficulty=difficulty,created_by=u.id))
+            db.session.add(Question(subject=subject,level=level,topic=topic,prompt=prompt,answer=answer,explanation=explanation,options_json=json.dumps(options,ensure_ascii=False),difficulty=difficulty,source='Criada manualmente',created_by=u.id))
             db.session.commit(); flash('Questão adicionada à Biblioteca do Conhecimento.', 'success'); return redirect(url_for('library'))
     subject=request.args.get('subject','').strip(); level=request.args.get('level','').strip(); topic=request.args.get('topic','').strip()
     query=Question.query
@@ -356,6 +500,210 @@ def import_questions():
     except Exception as e:
         db.session.rollback(); flash('Não foi possível importar. Confira o formato do arquivo.', 'error')
     return redirect(url_for('library'))
+
+@app.route('/admin/questions/import-online', methods=['POST'])
+@login_required
+@admin_required
+def import_online_questions():
+    """Import open multiple-choice questions from the Open Trivia Database."""
+    try: amount = max(1, min(20, int(request.form.get('amount', 10) or 10)))
+    except (TypeError, ValueError): amount = 10
+    category = request.form.get('category', 'any').strip()
+    difficulty = request.form.get('online_difficulty', 'any').strip().lower()
+    categories = {
+        '9': ('Conhecimentos gerais', 'Conhecimentos gerais'),
+        '17': ('Ciências', 'Ciências e natureza'),
+        '18': ('Informática', 'Computadores'),
+        '19': ('Matemática', 'Matemática'),
+        '21': ('Esportes', 'Esportes'),
+        '22': ('Geografia', 'Geografia'),
+        '23': ('História', 'História'),
+        '27': ('Biologia', 'Animais'),
+    }
+    if category not in {'any', *categories.keys()}:
+        flash('Categoria inválida para importação online.', 'error')
+        return redirect(url_for('admin'))
+    if difficulty not in {'any', 'easy', 'medium', 'hard'}:
+        difficulty = 'any'
+    params = {'amount': amount, 'type': 'multiple'}
+    if category != 'any': params['category'] = category
+    if difficulty != 'any': params['difficulty'] = difficulty
+    url = 'https://opentdb.com/api.php?' + urllib.parse.urlencode(params)
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'SistemaDoSoberano/0.5 (question importer)'})
+        with urllib.request.urlopen(req, timeout=20) as response:
+            payload = json.loads(response.read(2 * 1024 * 1024).decode('utf-8'))
+        if payload.get('response_code') != 0:
+            messages = {1:'A base não encontrou questões suficientes para esses filtros.', 2:'Parâmetros de importação inválidos.', 5:'Limite temporário da fonte atingido. Aguarde alguns segundos e tente novamente.'}
+            raise ValueError(messages.get(payload.get('response_code'), 'A fonte online retornou uma resposta inesperada.'))
+        added = 0
+        for item in payload.get('results', []):
+            prompt = html.unescape(urllib.parse.unquote(item.get('question', ''))).strip()
+            if not prompt or Question.query.filter_by(prompt=prompt).first():
+                continue
+            correct = html.unescape(urllib.parse.unquote(item.get('correct_answer', ''))).strip()
+            options = [html.unescape(urllib.parse.unquote(x)).strip() for x in item.get('incorrect_answers', [])]
+            options.append(correct)
+            random.shuffle(options)
+            raw_category = html.unescape(urllib.parse.unquote(item.get('category','Conhecimentos gerais')))
+            category_map = {'General Knowledge':('Conhecimentos gerais','Conhecimentos gerais'), 'Science & Nature':('Ciências','Ciências e natureza'), 'Science: Computers':('Informática','Computadores'), 'Science: Mathematics':('Matemática','Matemática'), 'Sports':('Esportes','Esportes'), 'Geography':('Geografia','Geografia'), 'History':('História','História'), 'Animals':('Biologia','Animais')}
+            subject, topic = categories.get(str(category), category_map.get(raw_category, (raw_category, raw_category)))
+            api_diff = item.get('difficulty', 'medium')
+            diff_label = {'easy':'Básica','medium':'Intermediária','hard':'Avançada'}.get(api_diff, 'Intermediária')
+            db.session.add(Question(subject=subject, level='Geral', topic=topic[:160], difficulty=diff_label,
+                prompt=prompt, options_json=json.dumps(options, ensure_ascii=False), answer=correct,
+                explanation='', source='Open Trivia Database — ' + html.unescape(item.get('category','Categoria geral'))[:180]))
+            added += 1
+        db.session.commit()
+        skipped = len(payload.get('results', [])) - added
+        flash(f'Importação online concluída: {added} questões adicionadas; {skipped} duplicadas ou vazias ignoradas.', 'success' if added else 'error')
+    except (urllib.error.URLError, TimeoutError) as exc:
+        db.session.rollback()
+        app.logger.warning('Falha ao consultar Open Trivia Database: %s', exc)
+        flash('Não foi possível acessar a base de questões agora. Tente novamente mais tarde.', 'error')
+    except (ValueError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        db.session.rollback()
+        flash(f'Importação online não concluída: {str(exc)[:220]}', 'error')
+    except Exception:
+        db.session.rollback()
+        app.logger.exception('Falha inesperada ao importar questões online')
+        flash('Ocorreu um erro ao salvar as questões importadas.', 'error')
+    return redirect(url_for('admin'))
+
+
+@app.route('/admin/questions/generate', methods=['POST'])
+@login_required
+@admin_required
+def generate_ai_questions():
+    """Generate original Portuguese multiple-choice questions using the OpenAI API."""
+    api_key = os.environ.get('OPENAI_API_KEY', '').strip()
+    if not api_key:
+        flash('Para gerar questões com IA, configure OPENAI_API_KEY nas variáveis de ambiente da hospedagem. A importação online e CSV/JSON continuam disponíveis sem essa chave.', 'error')
+        return redirect(url_for('admin'))
+    subject = request.form.get('subject', 'Conhecimentos gerais').strip()[:100]
+    level = request.form.get('level', 'Ensino médio').strip()[:100]
+    topic = request.form.get('topic', '').strip()[:160]
+    difficulty = request.form.get('difficulty', 'Intermediária').strip()[:30]
+    try: count = max(1, min(10, int(request.form.get('count', 5) or 5)))
+    except (TypeError, ValueError): count = 5
+    if not subject or not level or not topic:
+        flash('Preencha disciplina, nível e assunto para gerar questões.', 'error')
+        return redirect(url_for('admin'))
+    model = os.environ.get('OPENAI_MODEL', 'gpt-4o-mini').strip() or 'gpt-4o-mini'
+    instructions = (
+        'Crie questões originais em português brasileiro para uma biblioteca de estudos. '
+        'Retorne exclusivamente um objeto JSON com a chave questions, que contém uma lista. '
+        'Cada item deve conter subject, level, topic, difficulty, prompt, options (array com exatamente 4 alternativas), '
+        'answer (texto idêntico a uma das alternativas), explanation (explicação curta e verificável). '
+        'Evite ambiguidades, alternativas repetidas e questões que dependam de informação não fornecida. '
+        'Não copie questões protegidas de provas ou sites; crie formulações originais. '
+        'Revise a resposta e a explicação antes de retornar.'
+    )
+    request_payload = {
+        'model': model,
+        'response_format': {'type': 'json_object'},
+        'messages': [
+            {'role':'system','content':instructions},
+            {'role':'user','content':f'Gere {count} questões de múltipla escolha. Disciplina: {subject}. Nível: {level}. Assunto específico: {topic}. Dificuldade: {difficulty}. Todas as questões devem ter 4 alternativas plausíveis e somente uma resposta correta.'}
+        ],
+        'temperature': 0.7
+    }
+    try:
+        req = urllib.request.Request('https://api.openai.com/v1/chat/completions',
+            data=json.dumps(request_payload, ensure_ascii=False).encode('utf-8'),
+            headers={'Authorization':'Bearer '+api_key, 'Content-Type':'application/json', 'User-Agent':'SistemaDoSoberano/0.5'}, method='POST')
+        with urllib.request.urlopen(req, timeout=60) as response:
+            api_result = json.loads(response.read(3 * 1024 * 1024).decode('utf-8'))
+        content = api_result['choices'][0]['message']['content']
+        generated = json.loads(content).get('questions', [])
+        if not isinstance(generated, list): raise ValueError('A IA retornou um formato inesperado.')
+        added = 0
+        for item in generated[:count]:
+            if not isinstance(item, dict): continue
+            q_subject = str(item.get('subject') or subject).strip()[:100]
+            q_level = str(item.get('level') or level).strip()[:100]
+            q_topic = str(item.get('topic') or topic).strip()[:160]
+            prompt = str(item.get('prompt') or '').strip()
+            answer = str(item.get('answer') or '').strip()
+            explanation = str(item.get('explanation') or '').strip()
+            options = item.get('options', [])
+            if not isinstance(options, list): continue
+            options = [str(o).strip() for o in options if str(o).strip()]
+            if not q_subject or not q_level or not q_topic or not prompt or not answer or len(options) != 4 or answer not in options:
+                continue
+            if Question.query.filter_by(prompt=prompt).first(): continue
+            db.session.add(Question(subject=q_subject, level=q_level, topic=q_topic,
+                difficulty=str(item.get('difficulty') or difficulty)[:30], prompt=prompt,
+                options_json=json.dumps(options, ensure_ascii=False), answer=answer, explanation=explanation,
+                source=f'Gerada por IA ({model}) — revisar antes de usar'))
+            added += 1
+        if added == 0:
+            db.session.rollback()
+            flash('A IA não retornou questões válidas. Tente outro assunto ou ajuste os parâmetros.', 'error')
+        else:
+            db.session.commit()
+            flash(f'{added} questões geradas e adicionadas à biblioteca. Revise as respostas antes de usá-las em provas ou missões.', 'success')
+    except urllib.error.HTTPError as exc:
+        db.session.rollback()
+        detail = ''
+        try: detail = exc.read(1000).decode('utf-8', errors='replace')
+        except Exception: pass
+        app.logger.warning('OpenAI API respondeu HTTP %s: %s', exc.code, detail[:500])
+        flash(f'A API de IA retornou erro HTTP {exc.code}. Verifique a chave, os créditos e o modelo configurado.', 'error')
+    except (urllib.error.URLError, TimeoutError) as exc:
+        db.session.rollback()
+        app.logger.warning('Falha de conexão com a API de IA: %s', exc)
+        flash('Não foi possível conectar à API de IA agora. Tente novamente mais tarde.', 'error')
+    except (ValueError, KeyError, TypeError, json.JSONDecodeError):
+        db.session.rollback()
+        app.logger.exception('Resposta inválida ao gerar questões')
+        flash('A resposta da IA não pôde ser validada como questões. Nenhum item inválido foi salvo.', 'error')
+    except Exception:
+        db.session.rollback()
+        app.logger.exception('Falha inesperada ao gerar questões')
+        flash('Ocorreu um erro ao gerar ou salvar questões.', 'error')
+    return redirect(url_for('admin'))
+
+
+@app.route('/library/<int:qid>/edit', methods=['GET','POST'])
+@login_required
+@admin_required
+def edit_question(qid):
+    q = db.session.get(Question, qid)
+    if not q: abort(404)
+    if request.method == 'POST':
+        subject=request.form.get('subject','').strip(); level=request.form.get('level','').strip()
+        topic=request.form.get('topic','').strip(); prompt=request.form.get('prompt','').strip()
+        answer=request.form.get('answer','').strip(); explanation=request.form.get('explanation','').strip()
+        difficulty=request.form.get('difficulty','Intermediária').strip()
+        options=[x.strip() for x in request.form.get('options','').splitlines() if x.strip()]
+        source=request.form.get('source', q.source or 'Editada manualmente').strip()[:255]
+        if not all([subject, level, topic, prompt, answer]):
+            flash('Disciplina, nível, assunto, enunciado e resposta são obrigatórios.', 'error')
+        elif options and answer not in options:
+            flash('A resposta correta precisa corresponder exatamente a uma das alternativas.', 'error')
+        else:
+            q.subject=subject[:100]; q.level=level[:100]; q.topic=topic[:160]; q.prompt=prompt
+            q.answer=answer; q.explanation=explanation; q.difficulty=difficulty[:30]
+            q.options_json=json.dumps(options, ensure_ascii=False); q.source=source or 'Editada manualmente'
+            db.session.commit(); flash('Questão atualizada.', 'success')
+            return redirect(url_for('answer_question', qid=q.id))
+    try: options=json.loads(q.options_json or '[]')
+    except Exception: options=[]
+    return render_template('question_edit.html', q=q, options=options)
+
+
+@app.route('/library/<int:qid>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_question(qid):
+    q=db.session.get(Question, qid)
+    if not q: abort(404)
+    TestAttempt.query.filter_by(question_id=q.id).delete(synchronize_session=False)
+    db.session.delete(q); db.session.commit()
+    flash('Questão removida da biblioteca.', 'success')
+    return redirect(url_for('library'))
+
 
 @app.route('/performance', methods=['GET','POST'])
 @login_required
@@ -534,6 +882,166 @@ def complete_story_chapter(index):
         flash('Este capítulo já está registrado.', 'success')
     return redirect(url_for('story'))
 
+@app.route('/story/archive')
+@login_required
+def story_archive():
+    chapters = NarrativeChapter.query.filter_by(active=True).order_by(NarrativeChapter.number, NarrativeChapter.id).all()
+    chosen = {c.chapter_id for c in NarrativeChoice.query.filter_by(user_id=current_user().id).all()}
+    return render_template('story_archive.html', chapters=chapters, chosen=chosen)
+
+@app.route('/story/archive/<int:chapter_id>')
+@login_required
+def read_narrative_chapter(chapter_id):
+    chapter = db.session.get(NarrativeChapter, chapter_id)
+    if not chapter or (not chapter.active and not current_user().is_admin): abort(404)
+    payload = json.loads(chapter.content_json)
+    narrative = payload['chapter']
+    saved = {x.decision_id: x for x in NarrativeChoice.query.filter_by(user_id=current_user().id, chapter_id=chapter.id).all()}
+    return render_template('narrative_chapter.html', chapter=chapter, narrative=narrative, saved=saved)
+
+@app.route('/story/archive/<int:chapter_id>/decision/<decision_id>', methods=['POST'])
+@login_required
+def choose_narrative_option(chapter_id, decision_id):
+    chapter = db.session.get(NarrativeChapter, chapter_id)
+    if not chapter or not chapter.active: abort(404)
+    narrative = json.loads(chapter.content_json)['chapter']
+    decision = next((d for scene in narrative.get('scenes', []) for d in scene.get('decisions', []) or [] if d.get('id') == decision_id), None)
+    if not decision: abort(404)
+    option_id = request.form.get('option_id', '')
+    option = next((o for o in decision.get('options', []) if o.get('id') == option_id), None)
+    if not option: abort(400)
+    existing = NarrativeChoice.query.filter_by(user_id=current_user().id, chapter_id=chapter.id, decision_id=decision_id).first()
+    if existing:
+        flash('Esta decisão já foi registrada e não pode ser alterada.', 'error')
+        return redirect(url_for('read_narrative_chapter', chapter_id=chapter.id))
+    user = current_user()
+    state = NarrativePlayerState.query.filter_by(user_id=user.id).first()
+    if not state:
+        initial = narrative.get('initial_state', {}) or {}
+        state = NarrativePlayerState(user_id=user.id,
+            flags_json=json.dumps(initial.get('flags', []), ensure_ascii=False),
+            inventory_json=json.dumps(initial.get('inventory', []), ensure_ascii=False),
+            knowledge_json=json.dumps(initial.get('knowledge', []), ensure_ascii=False),
+            relationships_json=json.dumps(initial.get('relationships', {}), ensure_ascii=False),
+            karma_signals_json='[]')
+        db.session.add(state)
+        db.session.flush()
+    def read_list(field):
+        try: return json.loads(getattr(state, field) or '[]')
+        except (TypeError, json.JSONDecodeError): return []
+    def merge_unique(field, additions):
+        current = read_list(field)
+        for item in additions or []:
+            if item not in current: current.append(item)
+        setattr(state, field, json.dumps(current, ensure_ascii=False))
+    effects = option.get('effects', {}) or {}
+    merge_unique('flags_json', effects.get('flags_add', []))
+    merge_unique('inventory_json', effects.get('inventory_add', []))
+    merge_unique('knowledge_json', effects.get('knowledge_add', []))
+    merge_unique('karma_signals_json', effects.get('karma_signals', []))
+    try: relationships = json.loads(state.relationships_json or '{}')
+    except (TypeError, json.JSONDecodeError): relationships = {}
+    for relation in effects.get('relationship_updates', []) or []:
+        char = str(relation.get('character', ''))
+        if char:
+            relationships[char] = int(relationships.get(char, 0)) + int(relation.get('trust', 0))
+    state.relationships_json = json.dumps(relationships, ensure_ascii=False)
+    for item in effects.get('inventory_remove', []) or []:
+        inventory = read_list('inventory_json')
+        if item in inventory:
+            inventory.remove(item)
+            state.inventory_json = json.dumps(inventory, ensure_ascii=False)
+        else:
+            # Partial consumption may refer to a portion of a larger inventory entry.
+            wanted = {w for w in str(item).casefold().split() if len(w) > 3 and w not in {'parte', 'restante', 'pacote'}}
+            for idx, held in enumerate(inventory):
+                held_words = {w for w in str(held).casefold().split() if len(w) > 3 and w not in {'parte', 'restante', 'pacote'}}
+                if wanted and wanted.issubset(held_words):
+                    inventory[idx] = f'restante de {held}'
+                    state.inventory_json = json.dumps(inventory, ensure_ascii=False)
+                    break
+    db.session.add(NarrativeChoice(user_id=user.id, chapter_id=chapter.id, decision_id=decision_id,
+                                   option_id=option['id'], option_label=option['label'],
+                                   effects_json=json.dumps(effects, ensure_ascii=False)))
+    db.session.commit()
+    flash('Decisão registrada. Seus efeitos persistentes foram guardados; o karma será avaliado no fechamento do ciclo.', 'success')
+    return redirect(url_for('read_narrative_chapter', chapter_id=chapter.id))
+
+@app.route('/combat')
+@login_required
+def combat():
+    user = current_user()
+    active = CombatEncounter.query.filter_by(user_id=user.id, status='active').order_by(CombatEncounter.id.desc()).first()
+    history = CombatEncounter.query.filter_by(user_id=user.id).filter(CombatEncounter.status != 'active').order_by(CombatEncounter.id.desc()).limit(8).all()
+    if active:
+        try: battle_log = json.loads(active.log_json or '[]')
+        except json.JSONDecodeError: battle_log = []
+    else: battle_log = []
+    return render_template('combat.html', active=active, battle_log=battle_log, history=history, user=user)
+
+@app.route('/combat/start', methods=['POST'])
+@login_required
+def start_combat():
+    user = current_user()
+    if CombatEncounter.query.filter_by(user_id=user.id, status='active').first():
+        flash('Termine ou fuja do combate atual antes de iniciar outro.', 'error')
+        return redirect(url_for('combat'))
+    enemy_kind = request.form.get('enemy_kind', 'comum')
+    enemies = {
+        'fraco': {'name':'Rastejante Cinzento', 'hp':24, 'damage':(2,5), 'xp':20},
+        'comum': {'name':'Predador da Ruptura', 'hp':38, 'damage':(3,7), 'xp':35},
+        'forte': {'name':'Sentinela Deformada', 'hp':52, 'damage':(4,9), 'xp':55},
+    }
+    if enemy_kind not in enemies: abort(400)
+    enemy = enemies[enemy_kind]
+    max_hp = 40 + user.corpo * 8 + user.vitalidade * 5
+    log = [f'Combate iniciado contra {enemy["name"]}.', 'Você pode atacar, defender-se ou tentar fugir.']
+    db.session.add(CombatEncounter(user_id=user.id, enemy_name=enemy['name'], enemy_kind=enemy_kind,
+        enemy_hp=enemy['hp'], enemy_max_hp=enemy['hp'], player_hp=max_hp, player_max_hp=max_hp,
+        xp_reward=enemy['xp'], status='active', log_json=json.dumps(log, ensure_ascii=False)))
+    db.session.commit()
+    return redirect(url_for('combat'))
+
+@app.route('/combat/<int:encounter_id>/action', methods=['POST'])
+@login_required
+def combat_action(encounter_id):
+    user = current_user()
+    fight = db.session.get(CombatEncounter, encounter_id)
+    if not fight or fight.user_id != user.id or fight.status != 'active': abort(404)
+    try: log = json.loads(fight.log_json or '[]')
+    except json.JSONDecodeError: log = []
+    action = request.form.get('action', '')
+    if action == 'fugir':
+        fight.status = 'fled'; fight.finished_at = datetime.utcnow()
+        log.append('Você recuou e encerrou o combate sem recompensa.')
+    elif action in ('atacar', 'defender'):
+        if action == 'atacar':
+            damage = random.randint(1, 6) + max(1, user.corpo // 3)
+            fight.enemy_hp = max(0, fight.enemy_hp - damage)
+            log.append(f'Você acerta {fight.enemy_name} e causa {damage} de dano.')
+        else:
+            log.append('Você assume uma postura defensiva e reduz o próximo dano recebido.')
+        if fight.enemy_hp <= 0:
+            fight.status = 'victory'; fight.finished_at = datetime.utcnow()
+            grant_xp(user, fight.xp_reward)
+            log.append(f'{fight.enemy_name} foi derrotado. Você recebe {fight.xp_reward} XP.')
+        else:
+            low, high = {'fraco':(2,5), 'comum':(3,7), 'forte':(4,9)}[fight.enemy_kind]
+            enemy_damage = random.randint(low, high)
+            if action == 'defender': enemy_damage = max(1, (enemy_damage + 1) // 2)
+            mitigation = max(0, user.vitalidade // 5)
+            enemy_damage = max(1, enemy_damage - mitigation)
+            fight.player_hp = max(0, fight.player_hp - enemy_damage)
+            log.append(f'{fight.enemy_name} ataca e causa {enemy_damage} de dano.')
+            if fight.player_hp <= 0:
+                fight.status = 'defeat'; fight.finished_at = datetime.utcnow()
+                log.append('Você foi derrotado. O combate terminou; nenhuma recompensa foi concedida.')
+    else:
+        abort(400)
+    fight.log_json = json.dumps(log[-30:], ensure_ascii=False)
+    db.session.commit()
+    return redirect(url_for('combat'))
+
 @app.route('/backup')
 @login_required
 @admin_required
@@ -542,7 +1050,7 @@ def backup():
     if not app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
         flash('O backup SQL direto de PostgreSQL deve ser feito com pg_dump no provedor. Esta exportação JSON contém dados essenciais.', 'error')
     payload={}
-    for model in [User,Activity,SpecialQuest,QuestCompletion,Skill,Question,TestAttempt,PerformanceEntry,TrialSession,TrialResult,CampaignChapterProgress]:
+    for model in [User,Activity,SpecialQuest,QuestCompletion,Skill,Question,TestAttempt,PerformanceEntry,DietEntry,WaterEntry,TrialSession,TrialResult,CampaignChapterProgress,NarrativeChapter,NarrativeChoice,NarrativePlayerState,CombatEncounter]:
         rows=[]
         for obj in model.query.all():
             rows.append({c.name:(getattr(obj,c.name).isoformat() if isinstance(getattr(obj,c.name),(datetime,date)) else getattr(obj,c.name)) for c in model.__table__.columns})
@@ -553,7 +1061,89 @@ def backup():
 @app.route('/admin')
 @login_required
 @admin_required
-def admin(): return render_template('admin.html', users=User.query.order_by(User.id).all(), quests=SpecialQuest.query.order_by(SpecialQuest.id).all())
+def admin():
+    chapters = NarrativeChapter.query.order_by(NarrativeChapter.number, NarrativeChapter.id).all()
+    return render_template('admin.html', users=User.query.order_by(User.id).all(), quests=SpecialQuest.query.order_by(SpecialQuest.id).all(), chapters=chapters, question_count=Question.query.count())
+
+@app.route('/admin/chapters/import', methods=['POST'])
+@login_required
+@admin_required
+def import_chapter():
+    upload = request.files.get('chapter_file')
+    if not upload or not upload.filename:
+        flash('Escolha um arquivo JSON de capítulo.', 'error')
+        return redirect(url_for('admin'))
+    if not upload.filename.lower().endswith('.json'):
+        flash('O importador aceita apenas arquivos .json.', 'error')
+        return redirect(url_for('admin'))
+    try:
+        raw = upload.read(5 * 1024 * 1024 + 1)
+        if len(raw) > 5 * 1024 * 1024:
+            raise ValueError('O arquivo ultrapassa o limite de 5 MB.')
+        payload = json.loads(raw.decode('utf-8-sig'))
+        chapter = payload.get('chapter') if isinstance(payload, dict) else None
+        if payload.get('format') != 'sistema-do-soberano-narrative' or not isinstance(chapter, dict):
+            raise ValueError('Formato inválido. Use um JSON exportado no formato narrativo do Sistema do Soberano.')
+        required = ['id', 'number', 'title', 'scenes']
+        if any(k not in chapter for k in required) or not isinstance(chapter['scenes'], list) or not chapter['scenes']:
+            raise ValueError('O capítulo precisa ter id, número, título e pelo menos uma cena.')
+        if len(str(chapter['title'])) > 200 or len(str(chapter['id'])) > 100:
+            raise ValueError('Título ou identificador muito longo.')
+        decision_count = 0
+        for scene in chapter['scenes']:
+            if not isinstance(scene, dict) or not scene.get('id') or not scene.get('title'):
+                raise ValueError('Cada cena precisa ter id e título.')
+            if not isinstance(scene.get('text', ''), str):
+                raise ValueError('O texto de cada cena precisa ser uma string.')
+            for decision in scene.get('decisions', []) or []:
+                if not isinstance(decision, dict) or not decision.get('id') or not isinstance(decision.get('options'), list) or len(decision['options']) < 2:
+                    raise ValueError('Cada decisão precisa de id e pelo menos duas opções.')
+                if any(not isinstance(opt, dict) or not opt.get('id') or not opt.get('label') for opt in decision['options']):
+                    raise ValueError('Cada opção precisa ter id e rótulo.')
+                decision_count += 1
+        chapter_key = str(chapter['id']).strip()[:100]
+        existing = NarrativeChapter.query.filter_by(chapter_key=chapter_key).first()
+        serialized = json.dumps(payload, ensure_ascii=False)
+        values = dict(number=max(1, int(chapter['number'])), title=str(chapter['title']).strip()[:200],
+                      weekday=str(chapter.get('weekday',''))[:40], location=str(chapter.get('location',''))[:200],
+                      timeline=str(chapter.get('timeline',''))[:200], summary=str(chapter.get('summary',''))[:5000],
+                      content_json=serialized, word_count=max(0, int(chapter.get('word_count', 0) or 0)),
+                      decision_count=decision_count, active=True)
+        if existing:
+            existing.title = values['title']
+            existing.number = values['number']
+            existing.weekday = values['weekday']
+            existing.location = values['location']
+            existing.timeline = values['timeline']
+            existing.summary = values['summary']
+            existing.content_json = values['content_json']
+            existing.word_count = values['word_count']
+            existing.decision_count = values['decision_count']
+            existing.active = True
+            flash('O capítulo com este identificador já existia e foi atualizado. Escolhas anteriores dos jogadores foram preservadas.', 'success')
+        else:
+            db.session.add(NarrativeChapter(chapter_key=chapter_key, **values))
+            flash(f'Capítulo “{values["title"]}” importado com {len(chapter["scenes"])} cenas e {decision_count} decisões.', 'success')
+        db.session.commit()
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError, TypeError, KeyError) as exc:
+        db.session.rollback()
+        flash(f'Não foi possível importar o capítulo: {exc}', 'error')
+    except Exception:
+        db.session.rollback()
+        app.logger.exception('Falha ao importar capítulo narrativo')
+        flash('Ocorreu um erro ao salvar o capítulo. Nenhuma alteração foi confirmada.', 'error')
+    return redirect(url_for('admin'))
+
+@app.route('/admin/chapters/<int:chapter_id>/toggle', methods=['POST'])
+@login_required
+@admin_required
+def toggle_chapter(chapter_id):
+    chapter = db.session.get(NarrativeChapter, chapter_id)
+    if not chapter: abort(404)
+    chapter.active = not chapter.active
+    db.session.commit()
+    flash('Capítulo publicado.' if chapter.active else 'Capítulo arquivado e ocultado dos jogadores.', 'success')
+    return redirect(url_for('admin'))
 
 @app.route('/admin/quests', methods=['POST'])
 @login_required
@@ -575,7 +1165,7 @@ def delete_user(uid):
     if not u: abort(404)
     if u.id==current_user().id: flash('Não podes apagar a própria conta administrativa.', 'error')
     else:
-        for model in [Activity,QuestCompletion,Skill,TestAttempt,PerformanceEntry,TrialResult,TrialSession,CampaignChapterProgress]: model.query.filter_by(user_id=u.id).delete(synchronize_session=False)
+        for model in [Activity,QuestCompletion,Skill,TestAttempt,PerformanceEntry,DietEntry,WaterEntry,TrialResult,TrialSession,CampaignChapterProgress,NarrativeChoice,NarrativePlayerState,CombatEncounter]: model.query.filter_by(user_id=u.id).delete(synchronize_session=False)
         db.session.delete(u); db.session.commit(); flash('Conta removida.', 'success')
     return redirect(url_for('admin'))
 
@@ -600,8 +1190,19 @@ with app.app_context():
             SpecialQuest(title='Mapeamento do Potencial',description='Registra um resultado no Laboratório de Desempenho e estabelece uma linha de base.',skill_name='Leitura de Atributos',skill_description='Desbloqueia o registro narrativo do potencial do Portador.',xp_reward=50)
         ]); db.session.commit()
     admin_name=os.environ.get('ADMIN_USERNAME'); admin_password=os.environ.get('ADMIN_PASSWORD')
-    if admin_name and admin_password and not User.query.filter_by(username=admin_name).first():
-        db.session.add(User(username=admin_name,password_hash=generate_password_hash(admin_password),is_admin=True)); db.session.commit()
+    if admin_name and admin_password:
+        admin_user = User.query.filter_by(username=admin_name).first()
+        if not admin_user:
+            db.session.add(User(username=admin_name,password_hash=generate_password_hash(admin_password),is_admin=True))
+            db.session.commit()
+        else:
+            # Deployment variables are authoritative for this reserved admin identity.
+            changed = not admin_user.is_admin or not check_password_hash(admin_user.password_hash, admin_password)
+            admin_user.is_admin = True
+            if not check_password_hash(admin_user.password_hash, admin_password):
+                admin_user.password_hash = generate_password_hash(admin_password)
+            if changed:
+                db.session.commit()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT',5000)), debug=False)
