@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Dieta e Água • Sistema do Soberano{% endblock %}
+{% block content %}
+<div class="page-heading"><div class="eyebrow">MANUTENÇÃO DO PORTADOR</div><h1>Dieta <span class="glow">& Água</span></h1><p class="muted">Registra o que comeste e acompanha a água bebida. Os dados são pessoais e ficam associados à tua conta.</p></div>
+<div class="stats-grid">
+  <div class="stat-card"><span class="stat-label">ÁGUA HOJE</span><strong class="glow">{{ (water_total / 1000)|round(2) }} L</strong><small>{{ water_total }} ml registrados</small></div>
+  <div class="stat-card"><span class="stat-label">REFEIÇÕES HOJE</span><strong>{{ diet_today|length }}</strong><small>registros alimentares</small></div>
+  <div class="stat-card"><span class="stat-label">CALORIAS INFORMADAS</span><strong>{{ totals.calories|round|int if totals.has_macros else '—' }}</strong><small>{% if totals.has_macros %}kcal somadas dos campos preenchidos{% else %}opcional; preenche ao registrar{% endif %}</small></div>
+  <div class="stat-card"><span class="stat-label">PROTEÍNA INFORMADA</span><strong>{{ totals.protein|round(1) if totals.has_macros else '—' }}{% if totals.has_macros %} g{% endif %}</strong><small>soma dos valores preenchidos</small></div>
+</div>
+<div class="two-col form-layout">
+<section class="panel"><div class="eyebrow">REGISTRO ALIMENTAR</div><h2>O que comeste?</h2>
+<form method="post" class="stack-form">
+<input type="hidden" name="action" value="diet">
+<label>Refeição<select name="meal_type"><option>Pequeno-almoço</option><option>Almoço</option><option>Jantar</option><option>Lanche</option><option>Pré-treino</option><option>Pós-treino</option><option>Outra</option></select></label>
+<label>Alimento ou descrição<input name="food" required maxlength="200" placeholder="Ex.: ovos mexidos e banana-da-terra"></label>
+<label>Quantidade / porção<input name="quantity" maxlength="100" placeholder="Ex.: 3 ovos, 150 g; opcional"></label>
+<div class="form-grid"><label>Calorias (kcal)<input name="calories" type="number" min="0" max="100000" step="any" placeholder="Opcional"></label><label>Proteína (g)<input name="protein_g" type="number" min="0" max="100000" step="any" placeholder="Opcional"></label><label>Carboidratos (g)<input name="carbs_g" type="number" min="0" max="100000" step="any" placeholder="Opcional"></label><label>Gorduras (g)<input name="fat_g" type="number" min="0" max="100000" step="any" placeholder="Opcional"></label></div>
+<label>Observações<textarea name="notes" rows="2" maxlength="1000" placeholder="Fome, energia, como preparaste... (opcional)"></textarea></label><button class="btn primary wide" type="submit">SALVAR REFEIÇÃO</button>
+</form><p class="hint">Os valores nutricionais são opcionais e devem ser estimativas ou dados do rótulo; o sistema não os inventa.</p></section>
+<section class="panel"><div class="eyebrow">HIDRATAÇÃO</div><h2>Adicionar água</h2><p class="muted">Registra cada copo ou garrafa. O total diário é calculado automaticamente.</p>
+<form method="post" class="stack-form"><input type="hidden" name="action" value="water"><label>Quantidade bebida<select name="amount_ml"><option value="150">150 ml — copo pequeno</option><option value="200">200 ml — copo</option><option value="250" selected>250 ml — copo grande</option><option value="300">300 ml</option><option value="500">500 ml — garrafa</option><option value="750">750 ml</option><option value="1000">1000 ml — 1 litro</option></select></label><button class="btn primary wide" type="submit">+ REGISTRAR ÁGUA</button></form>
+<div class="progress-track"><div class="progress-fill" style="width: {{ [100, (water_total / 2000 * 100)]|min }}%"></div></div><p class="hint">Referência visual de 2 L, apenas para acompanhamento — não é uma meta médica personalizada. A necessidade varia conforme pessoa, clima, alimentação e atividade física.</p>
+{% if water_today %}<h3>Água registrada hoje</h3><div class="compact-list">{% for w in water_today[:8] %}<div class="list-row"><span>{{ w.created_at.strftime('%H:%M') }}</span><strong>{{ w.amount_ml }} ml</strong></div>{% endfor %}</div>{% else %}<p class="empty">Ainda não registraste água hoje.</p>{% endif %}
+</section></div>
+<section class="panel"><div class="section-heading"><div><div class="eyebrow">ALIMENTAÇÃO</div><h2>Registros de hoje</h2></div><span class="pill">{{ diet_today|length }} itens</span></div>
+{% if diet_today %}<div class="table-wrap"><table><thead><tr><th>Refeição</th><th>Alimento / quantidade</th><th>Macros informados</th><th>Hora</th></tr></thead><tbody>{% for e in diet_today %}<tr><td>{{ e.meal_type }}</td><td><strong>{{ e.food }}</strong><small>{{ e.quantity }}{% if e.notes %} · {{ e.notes }}{% endif %}</small></td><td>{% if e.calories is not none %}{{ e.calories|round|int }} kcal{% endif %}{% if e.protein_g is not none %}<small>{{ e.protein_g|round(1) }} g proteína</small>{% endif %}{% if e.carbs_g is not none %}<small>{{ e.carbs_g|round(1) }} g carboidratos</small>{% endif %}{% if e.fat_g is not none %}<small>{{ e.fat_g|round(1) }} g gorduras</small>{% endif %}{% if e.calories is none and e.protein_g is none and e.carbs_g is none and e.fat_g is none %}—{% endif %}</td><td>{{ e.created_at.strftime('%H:%M') }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="empty">Nenhuma refeição registrada hoje.</p>{% endif %}</section>
+<section class="panel"><div class="section-heading"><div><div class="eyebrow">HISTÓRICO RECENTE</div><h2>Registros anteriores</h2></div></div>
+{% if diet_history %}<div class="table-wrap"><table><thead><tr><th>Data</th><th>Refeição</th><th>Alimento</th><th>Quantidade</th></tr></thead><tbody>{% for e in diet_history %}<tr><td>{{ e.created_at.strftime('%d/%m/%Y %H:%M') }}</td><td>{{ e.meal_type }}</td><td>{{ e.food }}</td><td>{{ e.quantity or '—' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="empty">O histórico alimentar aparecerá aqui.</p>{% endif %}
+</section>
+{% endblock %}

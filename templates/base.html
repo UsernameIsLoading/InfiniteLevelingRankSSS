@@ -8,11 +8,11 @@
 <body>
 <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
 <header class="topbar"><a class="brand" href="{{ url_for('dashboard') if current_user_obj else url_for('login') }}"><span class="brand-mark">S</span><span>SISTEMA <b>DO SOBERANO</b><small>PROTOCOLO DE ASCENSÃO</small></span></a>
-{% if current_user_obj %}<nav><a href="{{ url_for('dashboard') }}">Painel</a><a href="{{ url_for('activities') }}">Atividades</a><a href="{{ url_for('quests') }}">Missões</a><a href="{{ url_for('library') }}">Biblioteca</a><a href="{{ url_for('performance') }}">Laboratório</a><a href="{{ url_for('trial') }}">Provação</a><a href="{{ url_for('evolution') }}">Evolução</a><a href="{{ url_for('story') }}">História</a>{% if current_user_obj.is_admin %}<a href="{{ url_for('admin') }}">ADM</a>{% endif %}<a class="logout" href="{{ url_for('logout') }}">Sair</a></nav>{% endif %}
+{% if current_user_obj %}<nav><a href="{{ url_for('dashboard') }}">Painel</a><a href="{{ url_for('activities') }}">Atividades</a><a href="{{ url_for('quests') }}">Missões</a><a href="{{ url_for('library') }}">Biblioteca</a><a href="{{ url_for('performance') }}">Laboratório</a><a href="{{ url_for('trial') }}">Provação</a><a href="{{ url_for('evolution') }}">Evolução</a><a href="{{ url_for('nutrition') }}">Dieta & Água</a><a href="{{ url_for('story') }}">História</a><a href="{{ url_for('story_archive') }}">Arquivo</a><a href="{{ url_for('combat') }}">Combate</a>{% if current_user_obj.is_admin %}<a href="{{ url_for('admin') }}">ADM</a>{% endif %}<a class="logout" href="{{ url_for('logout') }}">Sair</a></nav>{% endif %}
 </header>
 <main class="container">
 {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-stack">{% for category,message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
 {% block content %}{% endblock %}
-<footer> SISTEMA DO SOBERANO <span>•</span> CICLO I • UPDATE 0.2 <span>•</span> TEU PROGRESSO, TUAS REGRAS </footer>
+<footer> SISTEMA DO SOBERANO <span>•</span> CICLO I • UPDATE 0.5 <span>•</span> TEU PROGRESSO, TUAS REGRAS </footer>
 </main>
 <script>if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/service-worker.js').catch(()=>{});</script></body></html>

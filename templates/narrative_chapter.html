@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}{{ chapter.title }} • Sistema do Soberano{% endblock %}
+{% block content %}
+<div class="page-heading"><div class="eyebrow">ARQUIVO NARRATIVO · CAPÍTULO {{ chapter.number }}</div><h1>{{ chapter.title }}</h1><p class="muted">{{ narrative.weekday or chapter.weekday }}{% if narrative.location %} · {{ narrative.location }}{% endif %}{% if narrative.timeline %} · {{ narrative.timeline }}{% endif %}</p></div>
+{% if narrative.summary %}<section class="panel"><div class="eyebrow">REGISTRO</div><p>{{ narrative.summary }}</p><p class="muted">{{ chapter.word_count }} palavras narrativas · {{ chapter.decision_count }} decisões</p></section>{% endif %}
+{% for scene in narrative.scenes %}<article class="panel" id="{{ scene.id }}"><div class="eyebrow">CENA {{ loop.index }}</div><h2>{{ scene.title }}</h2>{% for paragraph in (scene.text or '').split('\n\n') %}{% if paragraph.strip() %}<p class="narrative-text">{{ paragraph }}</p>{% endif %}{% endfor %}
+{% for decision in scene.decisions or [] %}<section class="objective-box" style="display:block;margin-top:1.25rem"><strong>{{ decision.prompt }}</strong>
+{% if saved.get(decision.id) %}<p class="muted">Decisão registrada: <strong>{{ saved[decision.id].option_label }}</strong></p><p class="hint">Os efeitos já foram salvos. Esta decisão não pode ser alterada.</p>
+{% else %}<form method="post" action="{{ url_for('choose_narrative_option', chapter_id=chapter.id, decision_id=decision.id) }}" class="stack-form">{% for option in decision.options %}<label class="choice-option"><input type="radio" name="option_id" value="{{ option.id }}" {% if loop.first %}checked{% endif %} required><span><strong>{{ option.label }}</strong>{% if option.description %}<br><small class="muted">{{ option.description }}</small>{% endif %}</span></label>{% endfor %}<button class="btn primary">REGISTRAR DECISÃO</button></form>{% endif %}</section>{% endfor %}</article>{% endfor %}
+<section class="panel"><h2>Estado persistente</h2><p class="muted">As decisões registram flags, relações, conhecimentos, inventário e sinais de karma. A classificação de karma não é decidida por uma escolha isolada: fica para a avaliação do ciclo de sete dias.</p><a class="btn secondary" href="{{ url_for('story_archive') }}">← Voltar ao arquivo</a></section>
+{% endblock %}
