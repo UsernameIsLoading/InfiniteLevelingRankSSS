@@ -1,0 +1,456 @@
+{
+  "format": "sistema-do-soberano-narrative",
+  "format_version": "1.2",
+  "project": "Sistema do Soberano",
+  "chapter": {
+    "id": "capitulo_01",
+    "number": 1,
+    "title": "O primeiro contato",
+    "weekday": "segunda-feira",
+    "location": "São Paulo, Brasil",
+    "timeline": "Pouco mais de três meses após a Ruptura",
+    "status": "completo_primeiro_capitulo",
+    "target_words": {
+      "min": 2000,
+      "max": 5000
+    },
+    "decision_count_target": {
+      "min": 2,
+      "max": 5
+    },
+    "decision_count": 5,
+    "decision_resolution": "As decisões são registradas durante o capítulo, sem ramificações narrativas imediatas. Os sinais de karma, flags e alterações de relacionamento são acumulados e considerados no encerramento do ciclo de sete dias.",
+    "word_count_method": "Contagem de palavras no texto narrativo das cenas, excluindo títulos, prompts, opções, metadados e efeitos.",
+    "word_count": 4259,
+    "summary": "Sem treinamento de combate e com a água acabando, o protagonista deixa seu apartamento em São Paulo para alcançar um ponto de distribuição. No caminho, encontra Mauro, recebe avisos de outros moradores, presencia uma criatura desconhecida numa galeria e chega a uma escola que tenta funcionar como centro comunitário. Volta para casa com poucos recursos, mas com informações suficientes para começar a planejar a sobrevivência.",
+    "initial_state": {
+      "karma_cycle": {
+        "chaotic": 0,
+        "neutral": 0,
+        "orderly": 0
+      },
+      "relationships": {},
+      "inventory": [
+        "mochila",
+        "garrafa com pouca água",
+        "pacote de bolachas salgadas",
+        "carregador portátil quase descarregado",
+        "lanterna"
+      ],
+      "flags": [],
+      "knowledge": [
+        "A água do apartamento acabou",
+        "Há um ponto de distribuição no pátio de uma escola, com entrega incerta",
+        "Um aviso diz para não confiar nas luzes perto da estação"
+      ]
+    },
+    "scenes": [
+      {
+        "id": "c1_s1",
+        "title": "A cidade que ainda não acabou",
+        "type": "narrative",
+        "text": "O primeiro som da manhã foi o de uma televisão tentando sintonizar um canal que já não existia.\n\nChiado. Uma voz cortada ao meio. Mais chiado.\n\nVocê abriu os olhos no sofá, com o pescoço dolorido e o cobertor caído no chão. Durante alguns segundos, ficou imóvel, encarando o teto. A mancha de umidade acima da janela parecia maior do que na noite anterior.\n\nEntão o gerador do prédio tossiu três vezes e morreu.\n\nO silêncio que veio depois foi tão completo que você conseguiu ouvir a água pingando na cozinha.\n\nVocê pegou o celular.\n\nSem sinal.\n\nA bateria estava em vinte e três por cento. A última mensagem recebida continuava no topo da tela, enviada dois dias antes, sem resposta desde então. Você não a abriu. Já sabia o que estava escrito.\n\nHavia aprendido que certas coisas doíam menos quando permaneciam fechadas.\n\nDo lado de fora, São Paulo acordava de um jeito que nenhuma cidade deveria acordar.\n\nOs prédios continuavam de pé. As avenidas ainda cortavam os bairros. Placas de trânsito, semáforos e letreiros comerciais permaneciam onde sempre estiveram. Mas a cidade perdera sua continuidade. Uma rua podia estar cheia de pessoas tentando encontrar água enquanto, três quarteirões adiante, janelas se abriam para um vazio azul que não refletia a luz do sol.\n\nOs carros abandonados se acumulavam nas vias. Em algumas fachadas, avisos escritos à mão substituíam anúncios. Nos postes, cabos pendiam como raízes mortas.\n\nHavia pouco mais de três meses, as pessoas ainda discutiam congestionamentos, preços e o resultado do futebol.\n\nAgora, discutiam rotas seguras.\n\nA Ruptura não havia destruído o mundo de uma vez. Teria sido mais simples se tivesse feito isso.\n\nPrimeiro vieram as luzes no céu. Depois, as falhas de energia, as pessoas desaparecidas, os animais que agiam de maneira estranha. Então apareceram as primeiras criaturas, e as telas azuis começaram a surgir diante dos olhos de milhões de pessoas.\n\nNenhum governo apresentou uma explicação capaz de durar mais de alguns dias.\n\nAs transmissões internacionais falavam de catástrofes em outras grandes cidades: estruturas impossíveis surgindo entre edifícios, regiões inteiras evacuadas, criaturas atravessando zonas de quarentena. Algumas gravações pareciam falsas. Outras eram piores justamente porque pareciam reais.\n\nVocê não sabia qual versão acreditar.\n\nSabia apenas que a água do seu apartamento estava acabando.\n\nE que, naquele dia, precisaria sair.\n\nVocê se levantou, foi até a pia e abriu a torneira.\n\nNada.\n\nGirou o registro para o outro lado, como se a água pudesse ter mudado de ideia durante a noite.\n\nUma gota caiu.\n\nDepois outra.\n\nA terceira nunca veio.\n\n— Excelente — você murmurou. — Era exatamente o que faltava.\n\nA própria voz soou estranha no apartamento vazio.\n\nVocê reuniu uma mochila, uma garrafa com o resto da água, um pacote de bolachas salgadas, um carregador portátil quase descarregado e uma pequena lanterna. Não tinha arma de verdade. Havia uma faca de cozinha, mas você não se enganava sobre o que aquilo significaria diante de algo maior do que um cachorro.\n\nA Ruptura tinha transformado muita gente em especialistas da noite para o dia.\n\nVocê não era uma dessas pessoas.\n\nNão sabia lutar. Não entendia magia. Nunca havia precisado avaliar se uma rua estava silenciosa porque não havia ninguém ou porque alguma coisa estava esperando.\n\nSabia usar transporte público, fazer compras, resolver problemas cotidianos e reconhecer quando uma situação estava ficando perigosa.\n\nPor enquanto, teria que ser suficiente.\n\nQuando abriu a porta, encontrou um papel preso com fita adesiva no corredor.\n\nA letra era apressada:\n\nÁGUA E MEDICAMENTOS — DISTRIBUIÇÃO NO PÁTIO DA ESCOLA, ATÉ AS 10H. LEVAR RECIPIENTES. NÃO IR SOZINHO.\n\nAbaixo, alguém acrescentara:\n\nNão confiem nas luzes perto da estação.\n\nVocê leu a última frase duas vezes.\n\nEntão dobrou o papel e o guardou no bolso.\n\nNão porque acreditasse nele.\n\nMas porque, desde a Ruptura, aprendera que ignorar um aviso não era o mesmo que provar que ele estava errado."
+      },
+      {
+        "id": "c1_s2",
+        "title": "O homem do terceiro andar",
+        "type": "narrative",
+        "text": "A escadaria cheirava a poeira, concreto úmido e comida velha.\n\nO elevador estava parado no térreo desde a última queda de energia. Você desceu os lances de escada devagar, segurando o corrimão. No segundo andar, encontrou a porta de um apartamento entreaberta. Havia marcas escuras no chão, arrastadas até o interior.\n\nVocê não olhou por muito tempo.\n\nNo terceiro andar, alguém chamou:\n\n— Ei. Você aí.\n\nVocê parou.\n\nUm homem estava sentado no degrau entre dois lances, com uma mochila aberta aos pés. Devia ter pouco mais de quarenta anos. Usava uma camiseta cinza, calças de trabalho e um curativo malfeito na sobrancelha. Ao lado dele havia três garrafas vazias e uma caixa de ferramentas.\n\nVocê já o tinha visto antes da Ruptura. Talvez no elevador. Talvez entrando no prédio. Nunca haviam conversado por mais de alguns segundos.\n\n— Você vai sair? — ele perguntou.\n\n— Vou tentar encontrar água.\n\nO homem soltou uma risada curta, sem humor.\n\n— Todo mundo vai tentar encontrar água.\n\nEle se levantou e estendeu a mão.\n\n— Mauro. Apartamento 304.\n\nVocê apertou a mão dele.\n\n— Prazer.\n\n— Não parece.\n\n— É uma semana ruim.\n\nMauro quase sorriu.\n\nEle explicou que havia passado a manhã anterior tentando chegar a uma escola usada como ponto de distribuição. O caminho principal estava bloqueado por veículos, e um grupo armado controlava a passagem por uma avenida próxima. Não sabia se ainda estavam lá.\n\n— Mas tem outro caminho — acrescentou. — Pelo comércio, atravessando duas ruas menores. É mais longo.\n\n— E por que não foi por ele?\n\nMauro hesitou.\n\n— Porque vi uma coisa.\n\nVocê esperou.\n\n— Uma pessoa estava parada no meio da rua. Não se mexia. Tinha uma tela flutuando na frente do rosto, igual às nossas, só que… diferente. Depois a rua inteira ficou azul.\n\n— E você foi embora.\n\n— Sim.\n\nEle não tentou disfarçar a vergonha.\n\n— Eu tinha minha mulher comigo. Não ia arriscar a vida dela para descobrir o que estava acontecendo.\n\nMauro olhou para as próprias mãos.\n\n— Ela está no ponto de distribuição desde ontem. Foi ajudar na enfermaria. Eu voltei para buscar remédios que esqueci. Agora não sei se consigo chegar lá de novo.\n\nHavia uma mochila pronta aos pés dele, com ferramentas, um pedaço de corda e uma barra de ferro curta.\n\nVocê percebeu que ele estava esperando alguma coisa de você.\n\nTalvez companhia.\n\nTalvez coragem emprestada.\n\nTalvez apenas alguém que pudesse confirmar que ele não estava ficando louco.\n\nLá fora, um ruído grave atravessou a rua. Não parecia um motor. Durou alguns segundos e terminou num estalo que fez vibrar as janelas.\n\nMauro olhou para a escada.\n\n— Se vamos sair, é melhor decidir logo."
+      },
+      {
+        "id": "c1_s3",
+        "title": "O peso de escolher",
+        "type": "narrative_with_decision",
+        "text": "A pergunta pareceu simples até você tentar respondê-la.\n\nIr com Mauro significava confiar parte da própria segurança a um desconhecido. Sair sozinho eliminava a obrigação de cuidar de outra pessoa, mas também significava encarar qualquer problema sem ajuda. Procurar os outros moradores talvez rendesse companhia, informações ou recursos; talvez só consumisse o tempo que restava antes da distribuição.\n\nVocê olhou para a janela estreita da escada. Lá embaixo, uma faixa de luz azul deslizou pela parede externa do prédio e desapareceu.\n\n— Não sei o que foi aquilo — disse Mauro, acompanhando seu olhar. — Mas sei que ficar parado não vai encher nossas garrafas.\n\nVocê pensou na frase escrita no aviso: não ir sozinho.\n\nNão era uma ordem. Não era garantia de segurança. Era apenas o conselho de alguém que, talvez, soubesse alguma coisa.\n\nPor um instante, você percebeu o quanto desejava que uma tela aparecesse diante dos olhos e dissesse qual era a decisão correta. Desde a Ruptura, as pessoas tinham se acostumado a receber pequenas instruções do sistema: horário, estado físico, tarefas simples, às vezes uma mensagem de alerta. Mas nenhuma tela surgia para decidir por você.\n\nA escolha continuava sendo sua.",
+        "decisions": [
+          {
+            "id": "c1_d1",
+            "prompt": "Como você decide organizar a saída?",
+            "timing": "during_chapter",
+            "options": [
+              {
+                "id": "invite_mauro",
+                "label": "Convidar Mauro para ir junto",
+                "description": "Vocês têm pouca experiência, mas podem vigiar um ao outro. Ele conhece parte do caminho.",
+                "effects": {
+                  "flags_add": [
+                    "mauro_convidado"
+                  ],
+                  "relationship_updates": [
+                    {
+                      "character": "mauro",
+                      "trust": 1
+                    }
+                  ],
+                  "karma_signals": [
+                    "cooperacao_pragmatica"
+                  ]
+                }
+              },
+              {
+                "id": "go_alone",
+                "label": "Ir sozinho",
+                "description": "Você não terá de assumir a responsabilidade por outra pessoa nem depender de alguém que mal conhece.",
+                "effects": {
+                  "flags_add": [
+                    "protagonista_saiu_sozinho"
+                  ],
+                  "relationship_updates": [
+                    {
+                      "character": "mauro",
+                      "trust": -1
+                    }
+                  ],
+                  "karma_signals": [
+                    "autonomia_pragmatica"
+                  ]
+                }
+              },
+              {
+                "id": "find_neighbors",
+                "label": "Procurar primeiro outros moradores",
+                "description": "Pode haver mais gente disposta a ajudar, embora você perca tempo e talvez encontre o prédio vazio.",
+                "effects": {
+                  "flags_add": [
+                    "protagonista_procurou_vizinhos"
+                  ],
+                  "relationship_updates": [],
+                  "karma_signals": [
+                    "cautela_coletiva"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "c1_s4",
+        "title": "O aviso na parede",
+        "type": "narrative",
+        "text": "O corredor do térreo estava cheio de portas fechadas. Algumas tinham marcas de fita, como se os moradores tivessem tentado vedar as frestas. Outras exibiam avisos improvisados: TROCO PILHAS POR ÁGUA; PRECISO DE INSULINA; NÃO BATER DEPOIS DAS OITO.\n\nPerto da entrada, uma mulher de cabelos presos escrevia numa folha apoiada contra a parede. Ao lado dela, um menino segurava duas garrafas de refrigerante vazias.\n\n— A escola ainda está distribuindo água? — você perguntou.\n\nA mulher ergueu o rosto. Parecia cansada demais para desconfiar, mas desconfiada demais para relaxar.\n\n— Até as dez, se o caminhão chegou. Ontem chegou. Hoje ninguém confirmou.\n\nEla se chamava Célia. Trabalhava numa farmácia antes da Ruptura e agora ajudava a organizar as necessidades do prédio. O menino era seu sobrinho, Davi. Ele não disse nada, mas acompanhou a mochila com os olhos.\n\nCélia apontou para um mapa rabiscado numa caixa de papelão. Uma linha vermelha marcava a avenida principal; um X cobria a travessia perto da estação.\n\n— A rua grande está ruim. Tem gente cobrando para deixar passar. Não sei se são os mesmos de ontem. O caminho pelos fundos passa por uma galeria comercial. É escuro, mas evita a avenida.\n\n— E a estação? — você perguntou.\n\nCélia baixou a voz.\n\n— Vi luzes lá ontem. Não eram postes. Pareciam quadrados flutuando no ar. Um homem foi até elas e voltou sem reconhecer a própria irmã.\n\nEla pareceu se arrepender de ter contado.\n\n— Pode ter sido medo. Pode ter sido doença. Não vou fingir que sei.\n\nDavi levantou a mão, como se estivesse na escola.\n\n— Eu vi uma coisa também.\n\nCélia tocou o ombro dele, pedindo silêncio, mas o menino continuou:\n\n— Um cachorro sem sombra. Ele passou na rua e a sombra dele ficou parada no muro.\n\nNinguém respondeu de imediato.\n\nVocê pensou em perguntar mais, mas o menino já tinha voltado a olhar para as garrafas.\n\nCélia arrancou um pedaço de papel do bloco e anotou duas ruas.\n\n— Se encontrarem alguém ferido, não levem direto para o pátio sem avisar. A enfermaria está lotada. E, se conseguirem água, tragam só o que puderem carregar. Não vale morrer por uma garrafa.\n\nEla entregou o mapa. Não pediu pagamento nem prometeu que o caminho era seguro.\n\nA gentileza, naquele mundo, já parecia uma espécie de risco calculado.",
+        "decisions": [
+          {
+            "id": "c1_d2",
+            "prompt": "O que você faz com as informações e recursos que encontra no prédio?",
+            "timing": "during_chapter",
+            "options": [
+              {
+                "id": "share_supplies",
+                "label": "Oferecer parte das bolachas a Célia e Davi",
+                "description": "Você reduz sua própria reserva, mas ajuda quem ficou para trás.",
+                "effects": {
+                  "flags_add": [
+                    "dividiu_comida_com_celia"
+                  ],
+                  "inventory_remove": [
+                    "parte das bolachas salgadas"
+                  ],
+                  "relationship_updates": [
+                    {
+                      "character": "celia",
+                      "trust": 1
+                    }
+                  ],
+                  "karma_signals": [
+                    "generosidade_com_custo"
+                  ]
+                }
+              },
+              {
+                "id": "ask_for_details",
+                "label": "Pedir mais detalhes sobre o caminho e guardar os recursos",
+                "description": "Você prioriza informação sem abrir mão do pouco que carrega.",
+                "effects": {
+                  "flags_add": [
+                    "recebeu_mapa_celia"
+                  ],
+                  "knowledge_add": [
+                    "Mapa improvisado indica rota pela galeria comercial"
+                  ],
+                  "relationship_updates": [
+                    {
+                      "character": "celia",
+                      "trust": 0
+                    }
+                  ],
+                  "karma_signals": [
+                    "prudencia"
+                  ]
+                }
+              },
+              {
+                "id": "leave_quickly",
+                "label": "Agradecer e sair imediatamente",
+                "description": "Você evita perder tempo, mas não aprofunda o contato nem confirma todos os detalhes.",
+                "effects": {
+                  "flags_add": [
+                    "saiu_sem_demora"
+                  ],
+                  "relationship_updates": [
+                    {
+                      "character": "celia",
+                      "trust": 0
+                    }
+                  ],
+                  "karma_signals": [
+                    "urgencia_individual"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "c1_s5",
+        "title": "A galeria sem vitrines",
+        "type": "narrative",
+        "text": "A rua parecia maior quando você finalmente pisou nela.\n\nO ar tinha cheiro de plástico queimado e chuva antiga. Um ônibus atravessado bloqueava metade do cruzamento, com as janelas estilhaçadas e as portas abertas. No banco do motorista, um casaco pendia sobre o encosto. Não havia ninguém dentro.\n\nO ruído grave voltou, agora mais distante.\n\nVocê seguiu pela rota indicada, mantendo-se perto das fachadas. Em alguns pontos, marcas de giz apontavam para abrigos ou fontes de água. Em outros, as mesmas marcas tinham sido riscadas com violência. A cidade estava aprendendo a construir mapas e a apagá-los quase ao mesmo tempo.\n\nA entrada da galeria comercial era uma boca escura entre uma loja de conserto de celulares e uma padaria fechada. A porta de metal tinha sido levantada até a metade. Você precisou se abaixar para passar.\n\nLá dentro, o som da rua morreu.\n\nFileiras de lojas se alinhavam sob um teto de vidro rachado. Cartazes de liquidação ainda prometiam descontos para uma estação que já não fazia sentido. Um carrinho de limpeza estava tombado perto da escada rolante. No chão, pequenas gotas escuras formavam uma trilha até a praça de alimentação.\n\nVocê parou antes de segui-las.\n\nPerto de uma máquina de bebidas, alguma coisa se mexeu.\n\nEra pequena, do tamanho de um gato magro, mas tinha pernas compridas demais para o corpo. A pele cinzenta parecia feita de cinza compactada. Não havia olhos visíveis; apenas uma fenda vertical que se abriu quando ela farejou o ar.\n\nVocê recuou devagar.\n\nA criatura inclinou a cabeça.\n\nUma tela azul surgiu diante dos seus olhos.\n\nNão foi como as mensagens simples que apareciam quando você verificava seu estado físico. A superfície parecia mais nítida, quase dolorosa, e os caracteres tremiam como se estivessem tentando se ajustar à sua visão.\n\n[ALERTA DE PROXIMIDADE]\nEntidade não catalogada.\nDistância: curta.\nRecomendação: evitar confronto.\n\nA tela desapareceu antes que você conseguisse ler mais.\n\nA criatura avançou um passo.\n\nVocê sentiu o coração bater na garganta. A barra de ferro de Mauro — se ele estivesse com você — não seria uma arma milagrosa. Sua faca de cozinha, mesmo nas mãos de alguém treinado, talvez não resolvesse nada. Você não sabia se a coisa sangrava, se sentia dor ou se podia correr mais rápido que uma pessoa.\n\nEntão ela virou a cabeça para o outro lado.\n\nUm ruído de metal caiu no piso do andar superior. A criatura disparou atrás do som, subindo pela escada com uma velocidade absurda. As garras bateram no concreto, e por um segundo você viu que ela não tinha sombra alguma.\n\nVocê não esperou para descobrir o que a atraíra.\n\nAtravessou a galeria sem correr até alcançar a saída dos fundos. Só então percebeu que estava prendendo a respiração.\n\nDo lado de fora, encostou as costas na parede e contou até cinco.\n\nNão havia recebido uma habilidade nova. Não havia derrotado monstro algum. A tela só lhe dissera o que seus instintos já gritavam: evitar confronto.\n\nTalvez fosse essa a primeira lição real da Ruptura. Sobreviver não era vencer todas as coisas que apareciam no caminho.\n\nÀs vezes, era perceber que você não tinha chance e continuar vivo mesmo assim.",
+        "decisions": [
+          {
+            "id": "c1_d3",
+            "prompt": "Diante do alerta e da criatura, qual atitude você prioriza?",
+            "timing": "during_chapter",
+            "options": [
+              {
+                "id": "retreat_quietly",
+                "label": "Recuar em silêncio e procurar outra passagem",
+                "description": "Você evita testar os limites de uma criatura que não compreende.",
+                "effects": {
+                  "flags_add": [
+                    "evitou_confronto_entidade"
+                  ],
+                  "knowledge_add": [
+                    "Criatura cinzenta reage a sons e não aparentava ter sombra"
+                  ],
+                  "karma_signals": [
+                    "prudencia_diante_do_risco"
+                  ]
+                }
+              },
+              {
+                "id": "make_distraction",
+                "label": "Criar uma distração para afastá-la da rota",
+                "description": "Você tenta influenciar o comportamento da criatura sem se aproximar dela.",
+                "effects": {
+                  "flags_add": [
+                    "usou_distracao_galeria"
+                  ],
+                  "knowledge_add": [
+                    "A criatura pode ser atraída por ruídos"
+                  ],
+                  "karma_signals": [
+                    "engenhosidade_sob_pressao"
+                  ]
+                }
+              },
+              {
+                "id": "rush_past",
+                "label": "Aproveitar a distração e atravessar rapidamente",
+                "description": "Você aceita o risco de fazer barulho para não ficar preso na galeria.",
+                "effects": {
+                  "flags_add": [
+                    "atravessou_galeria_com_pressa"
+                  ],
+                  "knowledge_add": [
+                    "Criatura cinzenta é rápida em espaços fechados"
+                  ],
+                  "karma_signals": [
+                    "risco_calculado"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "c1_s6",
+        "title": "O pátio da escola",
+        "type": "narrative",
+        "text": "Quando você alcançou a escola, o sol já estava alto o bastante para iluminar o muro da entrada.\n\nO portão estava aberto, mas duas mesas tinham sido arrastadas para formar uma barreira. Atrás delas, uma mulher de jaleco conferia nomes num caderno. Havia uma fila curta de pessoas com baldes, garrafas e panelas. Algumas carregavam crianças. Outras tinham o olhar de quem não dormia havia dias.\n\nUm homem com um pedaço de madeira na mão vigiava o portão. Não parecia um soldado. Parecia um professor que recebera uma tarefa impossível e decidira cumpri-la mesmo assim.\n\n— Um recipiente por pessoa — anunciou ele. — Sem empurrar. Quem precisar de atendimento médico avisa antes de entrar.\n\nVocê mostrou a garrafa quase vazia. A mulher do caderno fez um sinal para que se aproximasse.\n\n— Nome?\n\nVocê respondeu.\n\nEla encontrou uma linha livre e anotou alguma coisa.\n\n— Temos água para distribuição limitada. A próxima entrega não está confirmada. Se alguém disser que tem certeza do contrário, está mentindo.\n\n— E os medicamentos?\n\nA mulher soltou o ar devagar.\n\n— Os básicos estão quase no fim. Analgésicos, antissépticos, alguns antibióticos. O que chega sai rápido.\n\nUm grito veio do outro lado do pátio.\n\nPerto da enfermaria improvisada, dois voluntários tentavam carregar um homem com a perna ferida. Ele segurava o próprio braço e gritava que não precisava de ajuda. Uma menina chorava ao lado, repetindo que o pai só precisava sentar um pouco.\n\nVocê sentiu a tentação de olhar para outro lado. Tinha passado a manhã inteira tentando chegar ali. Estava cansado, com sede e ainda precisava voltar para casa. O fato de outras pessoas estarem sofrendo não tornava seus recursos infinitos.\n\nMas o homem caiu de joelhos antes que os voluntários conseguissem segurá-lo.\n\nA mulher do caderno fechou o registro e correu para ajudar. A fila se desorganizou. O guarda improvisado ergueu a madeira e pediu espaço.\n\nVocê percebeu que a escola não era um refúgio seguro. Era apenas um lugar onde pessoas comuns tentavam impedir que o desespero virasse violência.\n\nNo fundo do pátio, uma sequência de telas azuis piscou sobre as cabeças de três voluntários. Uma delas mostrava símbolos que você não reconheceu. Por um instante, as telas pareceram sincronizar, como se respondessem umas às outras. Então voltaram ao normal.\n\nNinguém pareceu notar.\n\nOu ninguém quis admitir que notara.\n\nVocê recebeu água para encher a garrafa e um pequeno frasco de antisséptico, após explicar que ainda tinha uma quantidade mínima de comida. A mulher do caderno não prometeu mais nada.\n\n— Volte amanhã cedo, se puder. E não traga gente ferida sem avisar. Não temos espaço para todos.\n\nVocê olhou para a menina ao lado do pai ferido. Ela tinha parado de chorar e agora encarava as próprias mãos, como se estivesse tentando entender por que tremiam.\n\nA cidade continuava de pé.\n\nMas isso não significava que ainda estivesse funcionando.",
+        "decisions": [
+          {
+            "id": "c1_d4",
+            "prompt": "Ao ver o homem ferido e a equipe sobrecarregada, o que você faz?",
+            "timing": "during_chapter",
+            "options": [
+              {
+                "id": "help_volunteers",
+                "label": "Ajudar os voluntários por alguns minutos",
+                "description": "Você oferece tempo e esforço, mesmo precisando conservar energia para voltar.",
+                "effects": {
+                  "flags_add": [
+                    "ajudou_no_patio"
+                  ],
+                  "relationship_updates": [
+                    {
+                      "character": "equipe_escola",
+                      "trust": 1
+                    }
+                  ],
+                  "karma_signals": [
+                    "solidariedade_pratica"
+                  ]
+                }
+              },
+              {
+                "id": "protect_supplies",
+                "label": "Garantir a água e os medicamentos e liberar espaço",
+                "description": "Você reconhece que não tem preparo médico e evita atrapalhar o atendimento.",
+                "effects": {
+                  "flags_add": [
+                    "priorizou_retirada_de_suprimentos"
+                  ],
+                  "relationship_updates": [],
+                  "karma_signals": [
+                    "limite_pessoal_reconhecido"
+                  ]
+                }
+              },
+              {
+                "id": "ask_for_task",
+                "label": "Perguntar onde sua ajuda seria mais útil",
+                "description": "Você tenta colaborar sem presumir que sabe o que fazer.",
+                "effects": {
+                  "flags_add": [
+                    "ofereceu_ajuda_direcionada"
+                  ],
+                  "relationship_updates": [
+                    {
+                      "character": "equipe_escola",
+                      "trust": 1
+                    }
+                  ],
+                  "karma_signals": [
+                    "cooperacao_responsavel"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "c1_s7",
+        "title": "Uma tela que não responde",
+        "type": "narrative",
+        "text": "Antes de sair, você se afastou da fila e tentou abrir a interface que aparecia de vez em quando desde a Ruptura.\n\nA tela azul surgiu sobre sua mão esquerda, transparente o bastante para deixar o pátio visível através dela.\n\n[ESTADO PESSOAL]\nCondição física: cansado.\nFerimentos: nenhum registrado.\nFunções básicas: disponíveis.\nFunções avançadas: indisponíveis.\n\nAbaixo, uma linha de símbolos se moveu. Você tentou tocar nela. Nada aconteceu.\n\n— Claro — sussurrou. — Seria pedir demais.\n\nA interface não explicou o que eram as criaturas, não mostrou um mapa confiável nem apontou um lugar seguro. Não lhe ofereceu uma habilidade para lutar. Era uma ferramenta, e mesmo as ferramentas mais simples podiam falhar quando mais necessárias.\n\nVocê tentou perguntar mentalmente onde ficava a fonte de água mais próxima. A tela piscou e desapareceu.\n\nTalvez ela só respondesse a comandos específicos. Talvez não entendesse perguntas. Talvez não houvesse ninguém por trás dela para entender coisa alguma.\n\nVocê não sabia.\n\nPerto do portão, o homem que fazia a guarda conversava com duas pessoas. Uma delas afirmava que uma estação de metrô havia se tornado um ponto de passagem para outro lugar. A outra jurava que tudo era uma arma do governo. O guarda escutava sem concordar com nenhuma das versões.\n\nMauro — caso tivesse saído com você — não estava ali para comentar. Se você o deixara no prédio, não havia como saber se ele tentara seguir outra rota. A incerteza não era uma falha que pudesse ser corrigida na hora. Era parte do mundo agora.\n\nVocê guardou o antisséptico e prendeu a garrafa na mochila.\n\nO caminho de volta parecia diferente. Talvez porque agora soubesse que a galeria escondia alguma coisa. Talvez porque, ao chegar à escola, tivesse visto de perto o limite da ajuda que as pessoas conseguiam oferecer.\n\nAntes da Ruptura, era fácil imaginar que, numa emergência, alguém competente assumiria o comando. Uma equipe treinada, uma autoridade, uma pessoa com respostas.\n\nAgora, quem organizava a fila era uma mulher com um caderno. Quem vigiava o portão era um homem segurando madeira. Quem tentava cuidar dos feridos era gente que aprendera primeiros socorros na internet ou no trabalho.\n\nE você, que não sabia lutar nem curar ninguém, tinha conseguido chegar até ali.\n\nPor enquanto, isso precisava contar como alguma coisa.",
+        "decisions": []
+      },
+      {
+        "id": "c1_s8",
+        "title": "O caminho de volta",
+        "type": "narrative",
+        "text": "Você deixou a escola antes que a fila voltasse a crescer.\n\nO trajeto de retorno passou por uma rua de lojas fechadas, uma praça pequena e um estacionamento onde as cancelas permaneciam erguidas. Em uma parede, alguém pintara uma seta branca e a palavra ABRIGO. Mais abaixo, outra pessoa escrevera: NÃO É ABRIGO. É ARMADILHA.\n\nNenhuma das mensagens tinha data.\n\nVocê começou a entender que a informação também podia estragar. Um aviso verdadeiro de ontem podia ser mortal hoje. Um aviso falso podia ser a única coisa impedindo alguém de entrar numa rua perigosa. A cidade estava cheia de instruções sem autor, e a sobrevivência dependia de decidir quais mereciam atenção.\n\nAo virar a esquina, você ouviu um barulho de vidro quebrando. Um rapaz surgiu de uma loja com uma sacola nas mãos. Atrás dele, uma mulher gritava que os remédios eram para a mãe dela. O rapaz correu sem olhar para trás.\n\nVocê não o perseguiu.\n\nA mulher ficou na porta, ofegante, segurando um pedaço de pano contra a mão. Quando percebeu que você a observava, ergueu o queixo como se esperasse uma acusação.\n\n— Ele levou os antibióticos — disse ela. — Eu só precisava de uma caixa.\n\nVocê não tinha como saber se era verdade. Não tinha como recuperar os remédios. E não tinha qualquer certeza de que intervir teria mudado alguma coisa além de acrescentar mais uma pessoa ferida à rua.\n\nVocê seguiu.\n\nAo longe, acima dos telhados, uma coluna de luz azul se ergueu por um instante. Não iluminou a cidade; pareceu retirar as cores das fachadas ao redor. Um segundo depois, desapareceu.\n\nAs pessoas que estavam na rua pararam. Uma delas começou a rezar. Outra correu para dentro de um prédio. Um homem ergueu o celular e tentou gravar, mas a tela do aparelho apagou antes que pudesse apontar a câmera.\n\nVocê sentiu o mesmo frio na nuca que sentira na galeria.\n\nA luz não parecia uma explosão nem um incêndio. Parecia uma porta aberta por engano.\n\nEntão o ruído grave voltou, vindo de algum lugar abaixo da rua.\n\nVocê não correu imediatamente. Primeiro olhou para os lados, procurando uma entrada, uma esquina, qualquer coisa que pudesse servir de abrigo. Só quando o som cresceu é que começou a andar depressa.\n\nA lição da manhã ainda estava fresca: o medo podia ser útil, desde que não tomasse todas as decisões por você.\n\nQuando chegou ao prédio, seus braços doíam. A água pesava mais do que deveria. O antisséptico batia contra a lateral da mochila a cada passo.\n\nEra pouco.\n\nMas era alguma coisa.",
+        "decisions": []
+      },
+      {
+        "id": "c1_s9",
+        "title": "O que ficou no corredor",
+        "type": "narrative_with_decision",
+        "text": "O prédio parecia ainda mais escuro do que pela manhã.\n\nNo térreo, o aviso sobre a distribuição tinha sido arrancado da parede. Em seu lugar, alguém escrevera com marcador preto: AMANHÃ, MESMO HORÁRIO. NÃO GARANTIDO.\n\nVocê subiu devagar. O corpo começava a cobrar o esforço, e a ideia de sentar no sofá sem tirar os sapatos parecia tentadora.\n\nNo terceiro andar, havia vozes.\n\nMauro estava perto da janela, conversando com Célia. A mulher segurava uma folha dobrada. Quando viu você, interrompeu a frase.\n\n— Chegou — disse Mauro.\n\nA palavra carregava alívio, mas também uma pergunta que ele não fez.\n\nCélia explicou que dois moradores haviam saído atrás de comida e ainda não tinham voltado. Outro grupo pretendia tentar chegar à escola ao amanhecer. Ninguém sabia se o caminho pela galeria continuava seguro.\n\n— A gente precisa combinar alguma coisa — disse Mauro. — Não dá para cada um sair sem avisar e depois fingir que nada aconteceu.\n\nVocê olhou para a garrafa, depois para as portas fechadas.\n\nUma parte sua queria guardar a água, trancar a porta e cuidar apenas do próprio apartamento. Outra parte reconhecia que, se cada pessoa fizesse isso, o prédio se transformaria numa coleção de sobreviventes isolados, todos esperando que os outros resolvessem os problemas comuns.\n\nMas organização também tinha um custo. Reunir pessoas significava expor recursos, admitir fraquezas e confiar em gente que podia desaparecer na manhã seguinte.\n\nCélia colocou a folha sobre o parapeito. Era uma lista de necessidades: água, remédios, pilhas, comida, alguém que soubesse consertar o gerador. Ao lado de alguns nomes, havia riscos que indicavam quem ainda não tinha voltado.\n\n— Não estou pedindo que entregue tudo o que conseguiu — ela disse. — Só precisamos saber com o que podemos contar.\n\nMauro esperou sua resposta.\n\nDo lado de fora, muito longe, uma sirene começou a tocar. Parou no meio do primeiro lamento e não voltou.\n\nVocê pensou no aviso da estação, na criatura da galeria e nas telas que não respondiam às perguntas. Pensou também na mulher da escola, tentando manter a fila organizada sem prometer o que não tinha.\n\nTalvez a sobrevivência começasse com água.\n\nMas não terminava nela.",
+        "decisions": [
+          {
+            "id": "c1_d5",
+            "prompt": "Como você reage à proposta de organizar os moradores?",
+            "timing": "during_chapter",
+            "options": [
+              {
+                "id": "join_mutual_aid",
+                "label": "Apoiar um plano simples de ajuda mútua",
+                "description": "Você aceita colaborar com informações e tarefas, mantendo limites claros para seus recursos.",
+                "effects": {
+                  "flags_add": [
+                    "apoiou_ajuda_mutua"
+                  ],
+                  "relationship_updates": [
+                    {
+                      "character": "mauro",
+                      "trust": 1
+                    },
+                    {
+                      "character": "celia",
+                      "trust": 1
+                    }
+                  ],
+                  "karma_signals": [
+                    "responsabilidade_coletiva"
+                  ]
+                }
+              },
+              {
+                "id": "keep_independence",
+                "label": "Manter seus recursos e decidir caso a caso",
+                "description": "Você evita compromissos que talvez não consiga cumprir, sem impedir os outros de se organizarem.",
+                "effects": {
+                  "flags_add": [
+                    "manteve_independencia"
+                  ],
+                  "relationship_updates": [
+                    {
+                      "character": "mauro",
+                      "trust": 0
+                    },
+                    {
+                      "character": "celia",
+                      "trust": 0
+                    }
+                  ],
+                  "karma_signals": [
+                    "autonomia_com_limites"
+                  ]
+                }
+              },
+              {
+                "id": "offer_information",
+                "label": "Compartilhar o que viu, sem prometer recursos",
+                "description": "Você ajuda o grupo a avaliar os riscos, mas não assume obrigações materiais neste momento.",
+                "effects": {
+                  "flags_add": [
+                    "compartilhou_informacoes_de_perigo"
+                  ],
+                  "knowledge_add": [
+                    "Há uma criatura cinzenta na galeria comercial; evitar confronto e observar sons"
+                  ],
+                  "relationship_updates": [
+                    {
+                      "character": "mauro",
+                      "trust": 1
+                    },
+                    {
+                      "character": "celia",
+                      "trust": 1
+                    }
+                  ],
+                  "karma_signals": [
+                    "prudencia_compartilhada"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "c1_s10",
+        "title": "A primeira noite da nova rotina",
+        "type": "narrative",
+        "text": "Quando finalmente entrou no apartamento, você colocou a mochila no chão e ficou olhando para ela.\n\nUma garrafa de água. Um frasco de antisséptico. Algumas bolachas. Uma lanterna. Coisas pequenas, quase ridículas diante do tamanho do que estava acontecendo.\n\nAinda assim, você tinha saído de casa e voltado. Tinha visto uma criatura e sobrevivido sem lutar contra ela. Tinha descoberto que o sistema podia alertar sobre um perigo, mas não explicar o mundo. Tinha encontrado pessoas que tentavam ajudar e outras que talvez estivessem dispostas a tomar o que precisavam.\n\nNada daquilo resolvia o problema maior.\n\nMas era conhecimento. E, por enquanto, conhecimento era uma forma de preparação.\n\nVocê abriu a janela apenas o suficiente para olhar a rua. No prédio em frente, uma tela azul brilhava atrás de uma cortina. Uma silhueta se movia diante dela, gesticulando como se discutisse com alguém invisível.\n\nPor um instante, a luz da tela mudou de cor.\n\nVocê fechou a janela.\n\nNo celular, a bateria havia caído para onze por cento. Nenhuma mensagem nova. Nenhum sinal. A última notícia salva ainda mostrava imagens de outra cidade, do outro lado do mundo, onde uma avenida inteira terminava numa muralha de pedra que não existia na semana anterior à Ruptura.\n\nVocê desligou o aparelho para preservar a carga.\n\nA fome voltou a se fazer sentir. Você comeu duas bolachas e guardou o restante. Depois limpou a garrafa, separou o antisséptico e deixou a lanterna ao alcance da mão.\n\nNão havia motivo para chamar aquilo de vitória.\n\nA água talvez acabasse de novo amanhã. A escola podia fechar. A galeria podia estar tomada por criaturas. Mauro podia não voltar, Célia podia mudar de ideia, e a luz azul no céu podia surgir sobre o seu próprio prédio antes do amanhecer.\n\nMesmo assim, você sentou no chão, encostado à parede, e respirou até o coração desacelerar.\n\nA Ruptura havia mudado as regras do mundo sem explicar quais eram as novas regras.\n\nVocê não tinha escolhido estar ali. Não tinha pedido telas mágicas, criaturas sem sombra ou ruas que se dobravam para lugares impossíveis. Não tinha recebido uma espada, uma missão gloriosa ou uma promessa de poder.\n\nTinha recebido uma manhã difícil e uma decisão atrás da outra.\n\nTalvez fosse assim que tudo começasse.\n\nNão com alguém escolhido pelo destino.\n\nMas com alguém comum, cansado e assustado, que precisava decidir o que fazer quando a próxima porta se abrisse.\n\nLá fora, muito abaixo, o ruído grave atravessou a cidade mais uma vez.\n\nDessa vez, você não foi até a janela.\n\nAmanhã, precisaria levantar cedo.\n\nE, pela primeira vez em meses, tinha um plano pequeno o bastante para caber dentro de um dia: economizar água, descobrir se a distribuição continuaria e não entrar na galeria sem motivo.\n\nEra pouco.\n\nEra o começo."
+      }
+    ],
+    "continuity_notes": [
+      "O protagonista é uma pessoa comum, sem treinamento especial de combate.",
+      "Mauro tem uma esposa ajudando na enfermaria do ponto de distribuição.",
+      "O aviso sobre as luzes perto da estação deve continuar relevante, mas não precisa ser explicado imediatamente.",
+      "A Ruptura ocorreu há pouco mais de três meses.",
+      "A história se passa em São Paulo; catástrofes também atingiram outras grandes cidades do mundo.",
+      "Quase todos os humanos conseguem acessar funções simples das telas mágicas; capacidades excepcionais são raras ou limitadas.",
+      "A interface não é onisciente e não oferece soluções automáticas para problemas complexos.",
+      "As decisões não geram ramificações de capítulo durante a semana. Consequências acumuladas são avaliadas no fim do ciclo semanal.",
+      "A criatura cinzenta da galeria reage a sons, move-se com rapidez e aparentemente não projeta sombra; não foi derrotada nem catalogada.",
+      "O capítulo termina com o protagonista de volta ao apartamento e com um plano modesto para o dia seguinte."
+    ]
+  }
+}
