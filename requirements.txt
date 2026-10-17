@@ -1,2 +1,7 @@
-# Nenhuma dependência externa obrigatória: o app usa apenas a biblioteca padrão do Python.
-# Tkinter precisa estar instalado junto com a distribuição do Python.
+Flask==3.1.1
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.41
+psycopg[binary]==3.2.9
+gunicorn==23.0.0
+pytest==8.4.1
+requests==2.32.4
