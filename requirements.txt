@@ -1,0 +1,2 @@
+# Nenhuma dependência externa obrigatória: o app usa apenas a biblioteca padrão do Python.
+# Tkinter precisa estar instalado junto com a distribuição do Python.

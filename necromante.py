@@ -9,7 +9,7 @@ MONSTERS=[('Slime',1,34,7,2,'Resistente'),('Rato Sombrio',1,30,9,1,'Ágil'),('Fa
 SKILLS=[('Golpe Concentrado','Ataque',3,'Causa dano aumentado.','Foco'),('Onda Sombria','Ataque',5,'Causa dano arcano.','Catalisador'),('Barreira','Defesa',4,'Reduz o próximo dano recebido.','Amuleto'),('Regeneração','Suporte',5,'Recupera HP.','Talismã'),('Passo Veloz','Suporte',3,'Aumenta chance de esquiva.','Botas'),('Dreno Vital','Ataque',6,'Causa dano e recupera parte como HP.','Relíquia'),('Enfraquecer','Controle',4,'Reduz ataque inimigo por 2 turnos.','Selo'),('Explosão Arcana','Ataque',8,'Causa dano alto.','Orbe')]
 class Game(tk.Tk):
  def __init__(self):
-  super().__init__(); self.title('Necromante System — Python Beta'); self.geometry('980x700'); self.configure(bg='#0a0d17')
+  super().__init__(); self.title('Necromante System — Python'); self.geometry('980x700'); self.configure(bg='#0a0d17')
   self.db=sqlite3.connect(DB); self.db.row_factory=sqlite3.Row
   self.db.executescript('''CREATE TABLE IF NOT EXISTS p(id INTEGER PRIMARY KEY CHECK(id=1),hp INTEGER DEFAULT 100,maxhp INTEGER DEFAULT 100,res INTEGER DEFAULT 0,agi INTEGER DEFAULT 0,combat INTEGER DEFAULT 0,sp INTEGER DEFAULT 0,potions INTEGER DEFAULT 2); INSERT OR IGNORE INTO p(id) VALUES(1); CREATE TABLE IF NOT EXISTS skills(id INTEGER PRIMARY KEY,name TEXT UNIQUE,cat TEXT,cost INTEGER,descr TEXT,item TEXT); CREATE TABLE IF NOT EXISTS owned(skill_id INTEGER PRIMARY KEY); CREATE TABLE IF NOT EXISTS sessions(id INTEGER PRIMARY KEY,day TEXT,exercise TEXT,secs INTEGER,xp REAL); CREATE TABLE IF NOT EXISTS seen(qid TEXT PRIMARY KEY,answered TEXT); CREATE TABLE IF NOT EXISTS chapters(n INTEGER PRIMARY KEY,source TEXT,unlocked TEXT); CREATE TABLE IF NOT EXISTS inv(item TEXT PRIMARY KEY,qty INTEGER DEFAULT 1); CREATE TABLE IF NOT EXISTS battles(id INTEGER PRIMARY KEY,day TEXT,monster TEXT,result TEXT,reward INTEGER,drop TEXT);''')
   for s in SKILLS:self.db.execute('INSERT OR IGNORE INTO skills(name,cat,cost,descr,item) VALUES(?,?,?,?,?)',s)
@@ -140,17 +140,26 @@ class Game(tk.Tk):
    try:
     url=c['url']+'/api/integration/answered-questions?user_id='+urllib.parse.quote(str(c['user_id'])); req=urllib.request.Request(url,headers={'Authorization':'Bearer '+c['token']})
     with urllib.request.urlopen(req,timeout=15) as r:payload=json.loads(r.read())
-    new=[]
-    for q in payload.get('questions',[]):
-     qid=str(q.get('question_id',''))
-     if qid and not self.db.execute('SELECT 1 FROM seen WHERE qid=?',(qid,)).fetchone():self.db.execute('INSERT INTO seen VALUES(?,?)',(qid,q.get('answered_at',''))); new.append(qid)
-    if new:
-     self.db.execute('UPDATE p SET sp=sp+? WHERE id=1',(len(new),))
-     if not self.db.execute("SELECT 1 FROM chapters WHERE source='study' AND unlocked LIKE ?",(date.today().isoformat()+'%',)).fetchone():
-      n=max([r[0] for r in self.db.execute("SELECT n FROM chapters WHERE source='study'")]+[0])+2; self.db.execute('INSERT OR IGNORE INTO chapters VALUES(?,?,?)',(n,'study',datetime.now().isoformat()))
-    self.db.commit(); self.after(0,lambda:self.synced(len(new),len(payload.get('questions',[]))))
-   except Exception as e:self.after(0,lambda:messagebox.showerror('Sincronização falhou',f'{e}\nConfira o patch do QuestHub, URL e token.'))
+    # A thread faz apenas a requisição HTTP. Todas as operações SQLite/Tkinter
+    # são agendadas na thread principal para evitar erros de thread-safety.
+    self.after(0, lambda data=payload: self.process_sync(data))
+   except Exception as e:
+    err=str(e)
+    self.after(0, lambda err=err: messagebox.showerror('Sincronização falhou',f'{err}\nConfira o patch do QuestHub, URL e token.'))
   threading.Thread(target=worker,daemon=True).start()
+ def process_sync(self,payload):
+  new=[]
+  for q in payload.get('questions',[]):
+   qid=str(q.get('question_id',''))
+   if qid and not self.db.execute('SELECT 1 FROM seen WHERE qid=?',(qid,)).fetchone():
+    self.db.execute('INSERT INTO seen VALUES(?,?)',(qid,q.get('answered_at',''))); new.append(qid)
+  if new:
+   self.db.execute('UPDATE p SET sp=sp+? WHERE id=1',(len(new),))
+   if not self.db.execute("SELECT 1 FROM chapters WHERE source='study' AND unlocked LIKE ?",(date.today().isoformat()+'%',)).fetchone():
+    n=max([r[0] for r in self.db.execute("SELECT n FROM chapters WHERE source='study'")]+[0])+2
+    self.db.execute('INSERT OR IGNORE INTO chapters VALUES(?,?,?)',(n,'study',datetime.now().isoformat()))
+  self.db.commit()
+  self.synced(len(new),len(payload.get('questions',[])))
  def synced(self,n,total):self.qstatus.config(text=f'Sincronizado: {n} questões novas de {total}. +{n} SP.'); self.refresh(); messagebox.showinfo('QuestHub',f'{n} questões novas; +{n} SP.')
  def refresh(self):
   p=self.p(); self.dash.config(text=f"HP {p['hp']}/{p['maxhp']}   •   SP {p['sp']}   •   Poções {p['potions']}\n\nResistência: {p['res']} XP\nAgilidade: {p['agi']} XP\nCombate: {p['combat']} XP\nCapítulos liberados: {self.db.execute('SELECT COUNT(*) FROM chapters').fetchone()[0]}"); self.logdash.delete('1.0','end')
