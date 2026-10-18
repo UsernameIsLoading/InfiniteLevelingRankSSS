@@ -1,13 +1,13 @@
 # Necromante da Estação de Seul — versão web
 
-Aplicação Flask responsiva com acesso por senha, persistência via PostgreSQL/SQLite, treinos com temporizador regressivo, combate por turnos, habilidades, inventário, capítulos e endpoint de integração com o QuestHub.
+Aplicação Flask responsiva com acesso por senha, persistência via PostgreSQL/SQLite, treinos com temporizador regressivo, combate por turnos, habilidades, inventário, capítulos e endpoint de integração com o registro manual de questões.
 
 ## Publicar no Render
 
 1. Extraia o ZIP e envie a pasta para um repositório GitHub.
 2. No Render, escolha **New → Blueprint** e conecte o repositório. O `render.yaml` cria um serviço web e um banco PostgreSQL.
 3. Configure `SITE_PASSWORD` com uma senha numérica de exatamente 8 dígitos. Não coloque essa senha no código nem no GitHub.
-4. Configure `QUESTHUB_INTEGRATION_TOKEN` com um segredo aleatório forte, igual ao token usado pelo QuestHub. Configure também `QUESTHUB_BASE_URL` com a URL pública do QuestHub (sem barra final) e `QUESTHUB_USER_ID` com o ID da sua conta nele.
+4. Configure `QUESTHUB_INTEGRATION_TOKEN` com um segredo aleatório forte, igual ao token usado pelo registro manual de questões. Configure também `QUESTHUB_BASE_URL` com a URL pública do registro manual de questões (sem barra final) e `QUESTHUB_USER_ID` com o ID da sua conta nele.
 5. O `SECRET_KEY` é gerado pelo Render; `DATABASE_URL` vem do banco provisionado. O cookie seguro fica habilitado no serviço publicado.
 6. Confirme que o health check `/health` responde `{"status":"ok"}`.
 
@@ -30,9 +30,9 @@ python app.py
 
 Abra `http://127.0.0.1:5000`. Troque a senha de exemplo por uma sua; não use `12345678` como senha real.
 
-## Integração QuestHub
+## Integração registro manual de questões
 
-Na página **Habilidades**, o botão **Sincronizar QuestHub** consulta automaticamente `GET /api/integration/answered-questions?user_id=ID` no QuestHub. Configure `QUESTHUB_BASE_URL`, `QUESTHUB_USER_ID` e o mesmo `QUESTHUB_INTEGRATION_TOKEN` nos dois serviços.
+Na página **Habilidades**, o botão **Sincronizar registro manual de questões** consulta automaticamente `GET /api/integration/answered-questions?user_id=ID` no registro manual de questões. Configure `QUESTHUB_BASE_URL`, `QUESTHUB_USER_ID` e o mesmo `QUESTHUB_INTEGRATION_TOKEN` nos dois serviços.
 
 Endpoint alternativo de entrada: `POST /api/integration/answered-questions`
 
@@ -44,7 +44,7 @@ JSON:
 {"question_ids": ["id-unico-1", "id-unico-2"]}
 ```
 
-O servidor guarda IDs únicos e só concede 1 SP na primeira vez que cada ID é recebido. A sincronização busca as questões objetivas e discursivas reportadas pela API do QuestHub. Configure os três valores de ambiente e teste no ambiente publicado para confirmar a integração de ponta a ponta. Capítulos ímpares exigem ao menos 60 segundos de treino físico registrado no dia; capítulos pares exigem uma questão única sincronizada no dia. Os capítulos são liberados em sequência por categoria.
+O servidor guarda IDs únicos e só concede 1 SP na primeira vez que cada ID é recebido. A sincronização busca as questões objetivas e discursivas reportadas pela API do registro manual de questões. Configure os três valores de ambiente e teste no ambiente publicado para confirmar a integração de ponta a ponta. Capítulos ímpares exigem ao menos 60 segundos de treino físico registrado no dia; capítulos pares exigem uma questão única sincronizada no dia. Os capítulos são liberados em sequência por categoria.
 
 ## Como funciona o XP
 
@@ -55,4 +55,8 @@ O servidor guarda IDs únicos e só concede 1 SP na primeira vez que cada ID é 
 
 ## Estado honesto do projeto
 
-Este é um MVP web funcional, não uma reprodução completa da novel. O catálogo de habilidades é inicial e original, e os monstros são um conjunto inicial inspirado na imagem de referência fornecida, com nomes/estatísticas próprios. O leitor não distribui capítulos protegidos: usa texto autorizado fornecido pelo usuário e liga à fonte de leitura. Antes de uso real, teste os fluxos no Render e complete a integração QuestHub com o projeto correspondente.
+Este é um MVP web funcional, não uma reprodução completa da novel. O catálogo de habilidades é inicial e original, e os monstros são um conjunto inicial inspirado na imagem de referência fornecida, com nomes/estatísticas próprios. O leitor não distribui capítulos protegidos: usa texto autorizado fornecido pelo usuário e liga à fonte de leitura. Antes de uso real, teste os fluxos no Render e complete a integração registro manual de questões com o projeto correspondente.
+
+
+## Registro de questões e SP
+No painel, informe quantas questões você realizou. Cada grupo de 10 questões concede 1 SP; o restante é guardado para o próximo registro. Não há integração externa nem variáveis QuestHub necessárias.

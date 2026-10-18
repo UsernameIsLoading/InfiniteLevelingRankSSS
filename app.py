@@ -4,7 +4,6 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
-import requests
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-only-change-me')
@@ -51,10 +50,16 @@ class Inventory(db.Model):
     name = db.Column(db.String(100), nullable=False)
     quantity = db.Column(db.Integer, default=1, nullable=False)
 
-class SeenQuestion(db.Model):
+class QuestionProgress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    question_id = db.Column(db.String(160), unique=True, nullable=False)
-    seen_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    total_questions = db.Column(db.Integer, default=0, nullable=False)
+    remainder = db.Column(db.Integer, default=0, nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+class QuestionLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    count = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
 class Chapter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -167,7 +172,7 @@ def logout(): session.clear(); return redirect(url_for('login'))
 def dashboard():
     s=get_state(); skills={x.skill_key for x in OwnedSkill.query.all()}
     recent=Training.query.order_by(Training.id.desc()).limit(5).all()
-    return render_template('dashboard.html', s=s, skills=skills, recent=recent, total_questions=SeenQuestion.query.count(), chapters=Chapter.query.order_by(Chapter.number).all())
+    return render_template('dashboard.html', s=s, skills=skills, recent=recent, total_questions=(db.session.get(QuestionProgress, 1).total_questions if db.session.get(QuestionProgress, 1) else 0), question_remainder=(db.session.get(QuestionProgress, 1).remainder if db.session.get(QuestionProgress, 1) else 0), chapters=Chapter.query.order_by(Chapter.number).all())
 
 @app.route('/treino')
 @login_required
@@ -343,60 +348,40 @@ def unlock_chapter():
         if seconds_today < 60: return jsonify(error='Para capítulo ímpar, registre ao menos 60 segundos de treino físico hoje.'),400
     else:
         start_of_day_dt = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=timezone.utc)
-        if SeenQuestion.query.filter(SeenQuestion.seen_at >= start_of_day_dt).count()<1: return jsonify(error='Para capítulo par, responda ao menos uma questão hoje no QuestHub e sincronize.'),400
+        if QuestionLog.query.filter(QuestionLog.created_at >= start_of_day_dt, QuestionLog.count > 0).count()<1: return jsonify(error='Para capítulo par, registre ao menos uma questão estudada hoje.'),400
     db.session.add(Chapter(number=number))
     if odd: s.last_odd_chapter=number; s.last_odd_date=today
     else: s.last_even_chapter=number; s.last_even_date=today
     db.session.commit(); return jsonify(ok=True)
 
-@app.post('/api/integration/sync')
+@app.post('/api/questions/add')
 @login_required
-def sync_questhub():
-    base=os.getenv('QUESTHUB_BASE_URL','').strip().rstrip('/')
-    token=os.getenv('QUESTHUB_INTEGRATION_TOKEN','').strip()
-    user_id=os.getenv('QUESTHUB_USER_ID','').strip()
-    if not base or not token or not user_id:
-        return jsonify(error='Configure QUESTHUB_BASE_URL, QUESTHUB_USER_ID e QUESTHUB_INTEGRATION_TOKEN no Render.'),503
+def add_questions():
+    data = request.get_json(silent=True) or request.form
     try:
-        response=requests.get(base+'/api/integration/answered-questions',params={'user_id':user_id},headers={'Authorization':'Bearer '+token},timeout=12)
-        if response.status_code != 200:
-            return jsonify(error=f'QuestHub respondeu com status {response.status_code}. Confira URL, ID e token.'),502
-        payload=response.json()
-        questions=payload.get('questions',[])
-        if not isinstance(questions,list): return jsonify(error='Resposta do QuestHub em formato inesperado.'),502
-        added=0; s=get_state()
-        for item in questions[:5000]:
-            qid=str(item.get('question_id','')).strip()[:160]
-            if not qid or SeenQuestion.query.filter_by(question_id=qid).first(): continue
-            stamp=None
-            raw_stamp=item.get('answered_at')
-            if raw_stamp:
-                try: stamp=datetime.fromisoformat(str(raw_stamp).replace('Z','+00:00'))
-                except ValueError: stamp=None
-            if stamp is None: stamp=datetime.now(timezone.utc)
-            elif stamp.tzinfo is None: stamp=stamp.replace(tzinfo=timezone.utc)
-            db.session.add(SeenQuestion(question_id=qid,seen_at=stamp)); s.skill_points+=1; added+=1
-        db.session.commit()
-        return jsonify(received=len(questions),new_questions=added,skill_points=s.skill_points)
-    except requests.RequestException:
-        db.session.rollback()
-        return jsonify(error='Não foi possível conectar ao QuestHub. Confira se o serviço está online e se a URL pública está correta.'),502
-
-
-@app.post('/api/integration/answered-questions')
-def integration_questions():
-    token=os.getenv('QUESTHUB_INTEGRATION_TOKEN')
-    if not token: return jsonify(error='Integração não configurada no servidor.'),503
-    auth=request.headers.get('Authorization','')
-    if not auth.startswith('Bearer ') or not hmac.compare_digest(auth[7:],token): return jsonify(error='Não autorizado.'),401
-    data=request.get_json(silent=True) or {}; ids=data.get('question_ids',[])
-    if not isinstance(ids,list): return jsonify(error='question_ids deve ser uma lista.'),400
-    added=0; s=get_state()
-    for qid in ids[:500]:
-        qid=str(qid).strip()[:160]
-        if qid and not SeenQuestion.query.filter_by(question_id=qid).first():
-            db.session.add(SeenQuestion(question_id=qid)); s.skill_points+=1; added+=1
-    db.session.commit(); return jsonify(received=len(ids),new_questions=added,skill_points=s.skill_points)
+        count = int(data.get('count', 0))
+    except (TypeError, ValueError):
+        return jsonify(error='Informe um número inteiro de questões.'), 400
+    if count < 1 or count > 10000:
+        return jsonify(error='Registre entre 1 e 10.000 questões por vez.'), 400
+    progress = db.session.get(QuestionProgress, 1)
+    if progress is None:
+        progress = QuestionProgress(id=1, total_questions=0, remainder=0)
+        db.session.add(progress)
+        db.session.flush()
+    accumulated = progress.remainder + count
+    earned = accumulated // 10
+    progress.remainder = accumulated % 10
+    progress.total_questions += count
+    progress.updated_at = datetime.now(timezone.utc)
+    state = get_state()
+    state.skill_points += earned
+    db.session.add(QuestionLog(count=count))
+    db.session.commit()
+    return jsonify(ok=True, added=count, total_questions=progress.total_questions,
+                   remainder=progress.remainder, sp_earned=earned,
+                   skill_points=state.skill_points,
+                   message=f'{count} questões registradas; +{earned} SP. {progress.remainder}/10 para o próximo SP.')
 
 @app.errorhandler(500)
 def internal_error(e):
