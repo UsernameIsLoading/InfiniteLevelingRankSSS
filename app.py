@@ -62,14 +62,26 @@ class Chapter(db.Model):
     unlocked_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
 SKILLS = [
- {'key':'shadow_step','name':'Passo Sombrio','cost':3,'type':'utility','desc':'Uma vez por combate, reduz em 25% o dano do próximo golpe recebido.'},
- {'key':'soul_bolt','name':'Projétil de Alma','cost':4,'type':'attack','desc':'Ataque mágico que causa dano extra baseado no nível.'},
- {'key':'grave_guard','name':'Guardião da Cripta','cost':5,'type':'summon','desc':'Invoca um guardião por um turno para absorver parte do dano.'},
- {'key':'life_drain','name':'Dreno Vital','cost':6,'type':'attack','desc':'Causa dano e recupera parte do dano causado como vida.'},
- {'key':'mana_sense','name':'Percepção de Mana','cost':2,'type':'passive','desc':'Revela informações adicionais sobre o inimigo antes do combate.'},
- {'key':'soul_armory','name':'Arsenal de Almas','cost':7,'type':'passive','desc':'Aumenta a chance de encontrar itens após vencer um monstro.'},
- {'key':'undead_bond','name':'Vínculo dos Mortos','cost':8,'type':'summon','desc':'Fortalece seus aliados invocados durante um combate.'},
- {'key':'last_stand','name':'Última Resistência','cost':10,'type':'passive','desc':'Uma vez por combate, evita ser derrotado por um único golpe.'},
+ {'key':'shadow_step','name':'Passo Sombrio','cost':3,'type':'Defesa','desc':'Uma vez por combate, reduz em 25% o dano do primeiro golpe recebido.'},
+ {'key':'soul_bolt','name':'Projétil de Alma','cost':4,'type':'Ataque mágico','desc':'Há 35% de chance por turno de lançar energia espiritual e causar dano extra.'},
+ {'key':'grave_guard','name':'Guardião da Cripta','cost':5,'type':'Invocação','desc':'Um guardião espectral reduz o dano do primeiro ataque recebido em 50%.'},
+ {'key':'life_drain','name':'Dreno Vital','cost':6,'type':'Ataque mágico','desc':'Há 25% de chance de causar dano adicional e recuperar parte da vida.'},
+ {'key':'mana_sense','name':'Percepção de Mana','cost':2,'type':'Passiva','desc':'Permite observar os atributos e a característica do monstro antes da luta.'},
+ {'key':'soul_armory','name':'Fortuna da Cripta','cost':7,'type':'Passiva','desc':'Aumenta a chance de encontrar um Fragmento de Alma após a vitória.'},
+ {'key':'undead_bond','name':'Vínculo dos Mortos','cost':8,'type':'Invocação','desc':'A energia dos aliados espectrais reduz levemente os ataques inimigos.'},
+ {'key':'last_stand','name':'Última Resistência','cost':10,'type':'Passiva','desc':'Uma vez por combate, impede que um golpe reduza sua vida abaixo de 1.'},
+ {'key':'soul_burst','name':'Explosão Espiritual','cost':5,'type':'Ataque mágico','desc':'30% de chance de liberar uma explosão que causa dano adicional.'},
+ {'key':'bone_prison','name':'Prisão Óssea','cost':6,'type':'Controle','desc':'25% de chance de enfraquecer o próximo ataque do inimigo.'},
+ {'key':'spectral_aegis','name':'Égide Espectral','cost':7,'type':'Defesa','desc':'Reduz em 15% o dano recebido durante o combate.'},
+ {'key':'curse_mark','name':'Marca da Ruína','cost':6,'type':'Maldição','desc':'A marca aumenta em 3 o dano de cada golpe causado por você.'},
+ {'key':'soul_chain','name':'Corrente de Almas','cost':8,'type':'Ataque mágico','desc':'20% de chance de atingir o inimigo uma segunda vez com dano reduzido.'},
+ {'key':'grave_mend','name':'Restauração Sepulcral','cost':8,'type':'Passiva','desc':'Recupera 3 HP ao final de cada turno, até o limite máximo.'},
+ {'key':'wraith_form','name':'Forma Etérea','cost':7,'type':'Defesa','desc':'Há 30% de chance de evitar completamente um ataque recebido.'},
+ {'key':'soul_fortress','name':'Fortaleza da Alma','cost':9,'type':'Passiva','desc':'Reduz em 3 o dano de cada ataque inimigo.'},
+ {'key':'blood_pact','name':'Pacto do Crepúsculo','cost':9,'type':'Passiva','desc':'Quando sua vida cai abaixo de 40%, seus ataques causam 5 de dano adicional.'},
+ {'key':'death_pulse','name':'Pulso da Morte','cost':10,'type':'Ataque mágico','desc':'Causa dano extra quando o inimigo está com menos de 30% de vida.'},
+ {'key':'mana_siphon','name':'Drenagem Arcana','cost':8,'type':'Passiva','desc':'20% de chance por turno de recuperar 3 HP e acrescentar dano ao ataque.'},
+ {'key':'fortune_ritual','name':'Ritual da Fortuna','cost':6,'type':'Passiva','desc':'Aumenta a chance de receber recompensas extras após vencer.'},
 ]
 MONSTERS = [
  {'name':'Lodo Errante','tier':1,'hp':24,'atk':5,'def':0,'trait':'Regeneração lenta: recupera 2 HP a cada dois turnos.','drop':'Gelatina Sombria','chance':0.18},
@@ -85,9 +97,18 @@ MONSTERS = [
  {'name':'Colosso da Fenda','tier':5,'hp':190,'atk':25,'def':8,'trait':'Abalo: ataques pesados a cada dois turnos.','drop':'Núcleo da Fenda','chance':0.07},
 ]
 ITEMS = [
- {'key':'small_potion','name':'Poção de Vida','cost':3,'desc':'Recupera 30 HP durante a preparação do combate.'},
- {'key':'soul_shard','name':'Fragmento de Alma','cost':5,'desc':'Fragmento raro encontrado após algumas vitórias.'},
- {'key':'shadow_cloak','name':'Manto de Sombra','cost':8,'desc':'Item equipável que concede +2 de defesa em combate.'},
+ {'key':'small_potion','name':'Poção de Vida','cost':3,'desc':'Consumível: recupera 30 HP, sem ultrapassar sua vida máxima.','kind':'consumable','heal':30},
+ {'key':'greater_potion','name':'Poção Vital Maior','cost':7,'desc':'Consumível: recupera 65 HP, sem ultrapassar sua vida máxima.','kind':'consumable','heal':65},
+ {'key':'soul_tonic','name':'Tônico de Alma','cost':6,'desc':'Consumível: restaura 15 HP e concede 2 de ouro ao encontrar um monstro derrotado.','kind':'consumable','heal':15},
+ {'key':'soul_shard','name':'Fragmento de Alma','cost':5,'desc':'Cristal raro de energia espiritual; também pode aparecer como recompensa.','kind':'material'},
+ {'key':'shadow_cloak','name':'Manto de Sombra','cost':8,'desc':'Relíquia equipada: reduz em 2 o dano recebido em combate.','kind':'equipment'},
+ {'key':'crypt_amulet','name':'Amuleto da Cripta','cost':10,'desc':'Relíquia equipada: reduz em 3 o dano recebido em combate.','kind':'equipment'},
+ {'key':'regen_ring','name':'Anel da Regeneração','cost':12,'desc':'Relíquia equipada: recupera 2 HP ao final de cada turno.','kind':'equipment'},
+ {'key':'guardian_seal','name':'Selo Guardião','cost':9,'desc':'Relíquia equipada: reduz em 40% o primeiro golpe recebido em cada combate.','kind':'equipment'},
+ {'key':'fortune_charm','name':'Talismã da Fortuna','cost':10,'desc':'Relíquia equipada: aumenta a chance de encontrar recompensas extras.','kind':'equipment'},
+ {'key':'mana_crystal','name':'Cristal de Mana','cost':8,'desc':'Cristal raro que pode ser encontrado após combates difíceis.','kind':'material'},
+ {'key':'ash_scale','name':'Escama de Cinzas','cost':4,'desc':'Material deixado por criaturas arcanas; guardado no inventário.','kind':'material'},
+ {'key':'rift_core','name':'Núcleo da Fenda','cost':15,'desc':'Material raro de monstros poderosos; guardado no inventário.','kind':'material'},
 ]
 def get_state():
     s = db.session.get(State, 1)
@@ -229,6 +250,19 @@ def buy_item(item_key):
     else: db.session.add(Inventory(item_key=item_key,name=item['name'],quantity=1))
     db.session.commit(); return jsonify(ok=True,gold=s.gold)
 
+@app.post('/api/items/use/<item_key>')
+@login_required
+def use_item(item_key):
+    item=next((x for x in ITEMS if x['key']==item_key),None)
+    if not item or item.get('kind')!='consumable': return jsonify(error='Este item não pode ser consumido.'),400
+    owned=Inventory.query.filter_by(item_key=item_key).first()
+    if not owned or owned.quantity<1: return jsonify(error='Você não possui esse item.'),400
+    s=get_state(); before=s.hp; s.hp=min(s.max_hp,s.hp+int(item.get('heal',0))); healed=s.hp-before
+    owned.quantity-=1
+    if owned.quantity<=0: db.session.delete(owned)
+    db.session.commit()
+    return jsonify(ok=True,hp=s.hp,max_hp=s.max_hp,healed=healed,message=f'{item["name"]}: +{healed} HP.')
+
 @app.route('/combate')
 @login_required
 def combat_page():
@@ -244,25 +278,41 @@ def combat_resolve():
     if not candidates: return jsonify(error='Não há monstros neste nível.'),400
     m=candidates[idx % len(candidates)]
     s=get_state(); owned={x.skill_key for x in OwnedSkill.query.all()}
-    maxhp=s.max_hp; playerhp=max(1,min(s.hp,maxhp)); monsterhp=m['hp']; log=[]; turn=0; bonus_def=2 if Inventory.query.filter_by(item_key='shadow_cloak').first() else 0
+    maxhp=s.max_hp; playerhp=max(1,min(s.hp,maxhp)); monsterhp=m['hp']; log=[]; turn=0
+    bonus_def=(2 if Inventory.query.filter_by(item_key='shadow_cloak').first() else 0)+(3 if Inventory.query.filter_by(item_key='crypt_amulet').first() else 0)
+    has_ring=bool(Inventory.query.filter_by(item_key='regen_ring').first()); has_seal=bool(Inventory.query.filter_by(item_key='guardian_seal').first()); has_fortune=bool(Inventory.query.filter_by(item_key='fortune_charm').first())
     while playerhp>0 and monsterhp>0 and turn<20:
         turn+=1
         base=random.randint(7,13)+min(10,(s.combat_xp//300))
+        if 'curse_mark' in owned: base+=3
+        if 'blood_pact' in owned and playerhp <= maxhp*0.4: base+=5
+        if 'death_pulse' in owned and monsterhp <= m['hp']*0.3: base+=random.randint(6,11); log.append('Pulso da Morte atinge o inimigo enfraquecido.')
         if 'soul_bolt' in owned and random.random()<0.35: base+=random.randint(5,12); log.append(f'Turno {turn}: Projétil de Alma atinge o inimigo.')
         if 'life_drain' in owned and random.random()<0.25:
             drain=random.randint(4,10); base+=drain; playerhp=min(maxhp,playerhp+drain//2); log.append(f'Turno {turn}: Dreno Vital recupera vida.')
+        if 'soul_burst' in owned and random.random()<0.30: base+=random.randint(7,13); log.append('Explosão Espiritual causa dano extra.')
+        if 'mana_siphon' in owned and random.random()<0.20: base+=4; playerhp=min(maxhp,playerhp+3); log.append('Drenagem Arcana recupera 3 HP.')
         damage=max(1,base-m['def']); monsterhp-=damage; log.append(f'Você causa {damage} de dano.')
         if monsterhp<=0: break
         enemy=random.randint(max(1,m['atk']-3),m['atk']+3)
+        if 'bone_prison' in owned and random.random()<0.25: enemy=int(enemy*0.6); log.append('Prisão Óssea enfraquece o ataque inimigo.')
+        if 'undead_bond' in owned: enemy=max(1,enemy-2)
+        if 'spectral_aegis' in owned: enemy=int(enemy*0.85)
+        if 'wraith_form' in owned and random.random()<0.30: enemy=0; log.append('Forma Etérea evita o golpe.')
         if 'shadow_step' in owned and turn==1: enemy=int(enemy*.75); log.append('Passo Sombrio reduz o primeiro golpe.')
-        if 'grave_guard' in owned and turn==1: enemy=max(1,enemy//2); log.append('Guardião da Cripta absorve parte do ataque.')
-        enemy=max(1,enemy-bonus_def); playerhp-=enemy; log.append(f'{m["name"]} causa {enemy} de dano.')
+        if ('grave_guard' in owned and turn==1) or (has_seal and turn==1): enemy=int(enemy*.5 if 'grave_guard' in owned else enemy*.6); log.append('Uma proteção espectral reduz o primeiro golpe.')
+        enemy=max(0,enemy-bonus_def-(3 if 'soul_fortress' in owned else 0));
+        if 'last_stand' in owned and playerhp-enemy<1 and not any('Última Resistência' in x for x in log): enemy=max(0,playerhp-1); log.append('Última Resistência impede a derrota imediata.')
+        playerhp-=enemy; log.append(f'{m["name"]} causa {enemy} de dano.')
+        if 'grave_mend' in owned or has_ring: playerhp=min(maxhp,playerhp+(3 if 'grave_mend' in owned else 0)+(2 if has_ring else 0))
+        if 'soul_chain' in owned and monsterhp>0 and random.random()<0.20:
+            extra=max(1,random.randint(5,9)-m['def']); monsterhp-=extra; log.append(f'Corrente de Almas acerta novamente: {extra} de dano.')
     victory=monsterhp<=0
     if victory:
         s.combat_xp+=m['tier']*12; s.gold+=m['tier']*2+random.randint(1,4)
-        if random.random()<m['chance']:
+        if random.random()<min(0.85,m['chance']+(0.10 if has_fortune else 0)+(0.10 if 'fortune_ritual' in owned else 0)):
             db.session.add(Inventory(item_key='drop_'+m['name'].lower().replace(' ','_'),name=m['drop'],quantity=1)); log.append('Item raro obtido: '+m['drop']+'.')
-        if 'soul_armory' in owned and random.random()<0.15: db.session.add(Inventory(item_key='soul_shard',name='Fragmento de Alma',quantity=1)); log.append('Arsenal de Almas: você encontrou um Fragmento de Alma.')
+        if ('soul_armory' in owned or 'fortune_ritual' in owned) and random.random()<0.20: db.session.add(Inventory(item_key='soul_shard',name='Fragmento de Alma',quantity=1)); log.append('Arsenal de Almas: você encontrou um Fragmento de Alma.')
         s.hp=max(1,min(maxhp,playerhp+8)); outcome='vitória'
     else:
         s.hp=max(1,playerhp); outcome='derrota'; s.gold=max(0,s.gold-1)
