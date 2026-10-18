@@ -34,3 +34,6 @@ body{background:radial-gradient(ellipse at 80% -15%,rgba(135,13,37,.28) 0,transp
 footer{border-top-color:#301d24;color:#8e747b}
 button:focus-visible,a:focus-visible{outline:2px solid #ff5265;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+.question-form{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.09)}.question-form label{display:block;margin-bottom:7px;color:#e7dce0;font-size:.9rem}.question-form .duration-row{display:flex;gap:10px;align-items:center}.question-form input{min-width:0;flex:1}.question-form button{white-space:nowrap}.question-form .tiny{margin-bottom:0}
+@media(max-width:520px){.question-form .duration-row{align-items:stretch;flex-direction:column}.question-form button{width:100%}}
