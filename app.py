@@ -73,6 +73,12 @@ class DungeonRun(db.Model):
     status = db.Column(db.String(20), default='active', nullable=False)
     log = db.Column(db.Text, default='[]', nullable=False)
 
+class TutorAccess(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    access_date = db.Column(db.String(10), unique=True, nullable=False)
+    remaining_seconds = db.Column(db.Integer, default=2400, nullable=False)
+    active_since = db.Column(db.Float)
+
 class Chapter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     number = db.Column(db.Integer, unique=True, nullable=False)
@@ -226,6 +232,90 @@ def dashboard():
     s=get_state(); skills={x.skill_key for x in OwnedSkill.query.all()}
     recent=Training.query.order_by(Training.id.desc()).limit(5).all()
     return render_template('dashboard.html', s=s, skills=skills, recent=recent, total_questions=(db.session.get(QuestionProgress, 1).total_questions if db.session.get(QuestionProgress, 1) else 0), question_remainder=(db.session.get(QuestionProgress, 1).remainder if db.session.get(QuestionProgress, 1) else 0), chapters=Chapter.query.order_by(Chapter.number).all())
+
+@app.route('/tutor')
+@login_required
+def tutor_page():
+    today = date.today().isoformat()
+    access = TutorAccess.query.filter_by(access_date=today).first()
+    remaining = access.remaining_seconds if access else 2400
+    if access and access.active_since:
+        remaining = max(0, remaining - int(time.time() - access.active_since))
+    start_of_day_dt = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=timezone.utc)
+    questions_today = sum(x.count for x in QuestionLog.query.filter(QuestionLog.created_at >= start_of_day_dt).all())
+    return render_template('tutor.html', remaining=max(0, remaining), questions_today=questions_today, api_configured=bool(os.getenv('OPENAI_API_KEY')))
+
+@app.post('/api/tutor/open')
+@login_required
+def tutor_open():
+    today = date.today().isoformat()
+    start_of_day_dt = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=timezone.utc)
+    questions_today = sum(x.count for x in QuestionLog.query.filter(QuestionLog.created_at >= start_of_day_dt).all())
+    if questions_today < 10:
+        return jsonify(error=f'Registre pelo menos 10 questões hoje para liberar o tutor. Você registrou {questions_today}/10.'), 403
+    access = TutorAccess.query.filter_by(access_date=today).first()
+    if access is None:
+        access = TutorAccess(access_date=today, remaining_seconds=2400)
+        db.session.add(access)
+    if access.active_since is None and access.remaining_seconds > 0:
+        access.active_since = time.time()
+    db.session.commit()
+    return jsonify(ok=True, remaining=max(0, access.remaining_seconds - int(time.time() - access.active_since)) if access.active_since else 0)
+
+@app.post('/api/tutor/heartbeat')
+@login_required
+def tutor_heartbeat():
+    access = TutorAccess.query.filter_by(access_date=date.today().isoformat()).first()
+    if not access or not access.active_since:
+        return jsonify(error='Sessão do tutor não está ativa.', remaining=access.remaining_seconds if access else 0), 400
+    elapsed = max(0, int(time.time() - access.active_since))
+    access.remaining_seconds = max(0, access.remaining_seconds - elapsed)
+    access.active_since = time.time() if access.remaining_seconds > 0 else None
+    db.session.commit()
+    return jsonify(ok=True, remaining=access.remaining_seconds)
+
+@app.post('/api/tutor/close')
+@login_required
+def tutor_close():
+    access = TutorAccess.query.filter_by(access_date=date.today().isoformat()).first()
+    if access and access.active_since:
+        access.remaining_seconds = max(0, access.remaining_seconds - max(0, int(time.time() - access.active_since)))
+        access.active_since = None
+        db.session.commit()
+    return jsonify(ok=True, remaining=access.remaining_seconds if access else 0)
+
+@app.post('/api/tutor/chat')
+@login_required
+def tutor_chat():
+    api_key = os.getenv('OPENAI_API_KEY', '')
+    if not api_key:
+        return jsonify(error='Tutor ainda não configurado: adicione OPENAI_API_KEY nas variáveis de ambiente do Render.'), 503
+    access = TutorAccess.query.filter_by(access_date=date.today().isoformat()).first()
+    if not access or not access.active_since or access.remaining_seconds <= 0 or time.time() - access.active_since >= access.remaining_seconds:
+        return jsonify(error='Seu tempo de tutor acabou ou a sessão está pausada. Reabra o tutor para continuar.', expired=True), 403
+    data = request.get_json(silent=True) or {}
+    message = str(data.get('message', '')).strip()
+    history = data.get('history', [])
+    if not message or len(message) > 5000:
+        return jsonify(error='Escreva uma mensagem de até 5.000 caracteres.'), 400
+    safe_history = []
+    if isinstance(history, list):
+        for item in history[-10:]:
+            if isinstance(item, dict) and item.get('role') in ('user','assistant'):
+                content = str(item.get('content',''))[:3000]
+                if content: safe_history.append({'role':item['role'],'content':content})
+    try:
+        import requests
+        response = requests.post('https://api.openai.com/v1/chat/completions',
+            headers={'Authorization': f'Bearer {api_key}', 'Content-Type':'application/json'},
+            json={'model':os.getenv('OPENAI_MODEL','gpt-4o-mini'),'messages':[{'role':'system','content':'Você é um tutor de estudos paciente e claro, responde em português brasileiro. Explique o raciocínio passo a passo, adapte-se ao nível do estudante, faça perguntas de verificação e nunca invente fontes. Em vez de só dar respostas, ajude a compreender.'}]+safe_history+[{'role':'user','content':message}], 'max_tokens':900}, timeout=45)
+        if response.status_code >= 400:
+            return jsonify(error='A API de IA recusou a solicitação. Confira a chave, o modelo e o saldo da conta API.'), 502
+        answer = response.json()['choices'][0]['message']['content']
+        return jsonify(ok=True, answer=answer)
+    except Exception:
+        app.logger.exception('Tutor API error')
+        return jsonify(error='Não foi possível contatar a IA agora. Tente novamente em instantes.'), 502
 
 @app.route('/treino')
 @login_required

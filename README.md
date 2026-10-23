@@ -60,3 +60,11 @@ Este é um MVP web funcional, não uma reprodução completa da novel. O catálo
 
 ## Registro de questões e SP
 No painel, informe quantas questões você realizou. Cada grupo de 10 questões concede 1 SP; o restante é guardado para o próximo registro. Não há integração externa nem variáveis QuestHub necessárias.
+
+
+## Tutor de estudos com IA
+
+- Configure `OPENAI_API_KEY` nas variáveis de ambiente do Render para habilitar respostas. Opcional: `OPENAI_MODEL` (padrão `gpt-4o-mini`). A chave fica somente no servidor.
+- O tutor libera até 40 minutos por dia após o registro de pelo menos 10 questões naquele dia. O saldo fica salvo no banco existente e pode ser pausado ao fechar a janela.
+- A utilização da API é cobrada separadamente conforme a conta/provedor configurado; configure limites de gasto no painel do provedor.
+- Não recrie nem apague o banco existente. A nova tabela é criada automaticamente pela inicialização da aplicação.
