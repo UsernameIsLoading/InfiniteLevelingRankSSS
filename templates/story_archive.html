@@ -1,9 +1,0 @@
-{% extends 'base.html' %}
-{% block title %}Arquivo Narrativo • Sistema do Soberano{% endblock %}
-{% block content %}
-<div class="page-heading"><div class="eyebrow">LORE / CAPÍTULOS IMPORTADOS</div><h1>Arquivo <span class="glow">Narrativo</span></h1><p class="muted">Capítulos publicados pela administração. As decisões registram efeitos persistentes, sem ramificar a narrativa imediatamente.</p></div>
-<div class="chapter-grid">
-{% for ch in chapters %}<article class="panel chapter-card"><div class="chapter-top"><span class="pill">CAPÍTULO {{ ch.number }}</span><span class="pill rare">{{ ch.decision_count }} decisões</span></div><h2>{{ ch.title }}</h2><p class="muted">{{ ch.weekday }}{% if ch.location %} · {{ ch.location }}{% endif %}</p><p>{{ ch.summary or 'Este capítulo não possui resumo.' }}</p><div class="row spread"><span class="muted">{{ ch.word_count }} palavras</span><a class="btn primary" href="{{ url_for('read_narrative_chapter', chapter_id=ch.id) }}">LER CAPÍTULO →</a></div></article>
-{% else %}<section class="panel empty">Nenhum capítulo foi publicado ainda. Volta mais tarde.</section>{% endfor %}
-</div><a class="btn secondary" href="{{ url_for('story') }}">Voltar à campanha semanal</a>
-{% endblock %}
