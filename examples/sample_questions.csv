@@ -1,6 +1,0 @@
-﻿subject,level,topic,difficulty,prompt,options,answer,explanation,source
-Física,Ensino superior,Eletromagnetismo,Intermediária,Qual expressão representa a força magnética sobre uma partícula de carga q e velocidade v em um campo magnético B?,A) F = qE|B) F = q(v × B)|C) F = mv|D) F = qB,B) F = q(v × B),"A força magnética é dada por q(v × B), o produto vetorial entre a velocidade e o campo magnético multiplicado pela carga.",Questão original
-Eletrônica,Ensino técnico,Lei de Ohm,Básica,Um resistor de 1 kΩ está submetido a 5 V. Qual corrente o atravessa?,"A) 0,5 mA|B) 5 mA|C) 50 mA|D) 500 mA",B) 5 mA,I = V/R = 5/1000 A = 5 mA.,Questão original
-Matemática,Ensino médio,Funções,Básica,"Se f(x) = 2x + 3, qual é o valor de f(4)?",A) 8|B) 9|C) 11|D) 12,C) 11,f(4) = 2 × 4 + 3 = 11.,Questão original
-Física,Ensino médio,Mecânica,Básica,Um objeto de massa 2 kg sofre aceleração de 3 m/s². Qual é a força resultante?,"A) 1,5 N|B) 5 N|C) 6 N|D) 9 N",C) 6 N,"Pela segunda lei de Newton, F = ma = 6 N.",Questão original
-Eletrônica,Ensino técnico,Componentes,Básica,Qual componente é normalmente usado para limitar a corrente em um circuito simples?,A) Resistor|B) Antena|C) Transformador ideal|D) Conector,A) Resistor,"A resistência limita a corrente conforme a tensão aplicada, segundo a Lei de Ohm.",Questão original
